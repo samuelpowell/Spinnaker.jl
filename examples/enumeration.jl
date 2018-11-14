@@ -1,3 +1,8 @@
+# Spinnaker.jl: wrapper for FLIR/Point Grey Spinnaker SDK
+# Copyright (C) 2018 Samuel Powell
+
+# enumeration.jl: replicate Enumeration_C Spinnaker SDK example with low-level library
+
 using Spinnaker
 import Spinnaker: bool8_t, MAX_BUFFER_LEN
 
@@ -108,7 +113,7 @@ function query_interface(hInterface)
   else
     @info "No cameras detected"
   end
-println("DONE")
+
   spinCameraListClear(hCameraList[]);
   spinCameraListDestroy(hCameraList[]);
   return nothing

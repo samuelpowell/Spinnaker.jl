@@ -1,10 +1,16 @@
+# Spinnaker.jl: wrapper for FLIR/Point Grey Spinnaker SDK
+# Copyright (C) 2018 Samuel Powell
+
 module Spinnaker
 
 import Libdl
 
-# define libarary names
-const libSpinnaker_C = "libSpinnaker_C"
-const libSpinVideo_C = "libSpinVideo_C"
+# Include build configuration
+try
+  include(joinpath(@__DIR__, "..", "deps", "deps.jl"))
+catch
+  error("Package configuration file missing, run 'Pkg.build(\"Spinnaker\")' to configure.")
+end
 
 const MAX_BUFFER_LEN = Csize_t(255)
 
@@ -16,6 +22,7 @@ include("wrapper/spin_common.jl")
 
 function checkerror(err::spinError)
   err == spinError(0) ||  @error "Spinnaker SDK error: $err"
+  return nothing
 end
 
 include("wrapper/spin_api.jl")
@@ -28,11 +35,5 @@ foreach(names(@__MODULE__, all=true)) do s
     @eval export $s
   end
 end
-
-
-
-
-
-
 
 end # module
