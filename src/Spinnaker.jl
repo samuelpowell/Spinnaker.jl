@@ -4,6 +4,7 @@
 module Spinnaker
 
 import Libdl
+export System, Camera, CameraList
 
 # Include build configuration
 try
@@ -35,5 +36,41 @@ foreach(names(@__MODULE__, all=true)) do s
     @eval export $s
   end
 end
+
+# Utility functions
+function available(nodeName)
+  pbAvailable = Ref(bool8_t(false))
+  spinNodeIsAvailable(nodeName[], pbAvailable)
+  return (pbAvailable[] == 1)
+end
+
+function readable(nodeName)
+  if available(nodeName)
+   pbReadable = Ref(bool8_t(false))
+   spinNodeIsReadable(nodeName[], pbReadable)
+   return (pbReadable[] == 1)
+ else
+   return false
+ end
+end
+
+function writable(nodeName)
+  if available(nodeName)
+   pbWriteable = Ref(bool8_t(false))
+   spinNodeIsReadable(nodeName[], pbWriteable)
+   return (pbWriteable[] == 1)
+ else
+   return false
+ end
+end
+
+
+# Include interface
+include("System.jl")
+include("Camera.jl")
+include("CameraList.jl")
+
+
+
 
 end # module
