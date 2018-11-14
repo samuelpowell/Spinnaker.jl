@@ -11,7 +11,7 @@ using Clang: init
 const incpath = normpath("/usr/include/spinnaker/spinc")
 
 if !isdir(incpath)
-    error("Spinnaker SDK C header not found, please install manually.")
+  error("Spinnaker SDK C header not found, please install manually.")
 end
 
 const outpath = normpath(@__DIR__, "..", "src", "wrapper")
@@ -32,50 +32,50 @@ headerlibmap = Dict("SpinnakerC.h"       => "libSpinnaker_C",
 
 
 function library_file(header::AbstractString)
-    header_name = basename(header)
-    if(haskey(headerlibmap, header_name))
-        return headerlibmap[header_name]
-    else
-        @warn "$header has unknown library association, using libSpinnaker_C"
-        return "libSpinnaker_C"
-    end
+  header_name = basename(header)
+  if(haskey(headerlibmap, header_name))
+    return headerlibmap[header_name]
+  else
+    @warn "$header has unknown library association, using libSpinnaker_C"
+    return "libSpinnaker_C"
+  end
 end
 
 # Test if header should be wrapped
 function header_filter(top_hdr::AbstractString, cursor_header::AbstractString)
-    return (top_hdr == cursor_header) # Do not wrap nested includes
+  return (top_hdr == cursor_header) # Do not wrap nested includes
 end
 
 # Test if element should be wrapped
 function cursor_filter(name::AbstractString, cursor)
   return true
 end
-    #
-    # if typeof(cursor) == Clang.LibClang.CXCursor
-    #     # Wrap only spin, and quickSpin prefaced functions
-    #     return occursin(r"^(quickSpin|spin)", name)
-    # else
-    #     # Else, wrap everything
-    #     return true
-    # end
+#
+# if typeof(cursor) == Clang.LibClang.CXCursor
+#     # Wrap only spin, and quickSpin prefaced functions
+#     return occursin(r"^(quickSpin|spin)", name)
+# else
+#     # Else, wrap everything
+#     return true
+# end
 
 
 # Build wrapping context
 const context = init(
-    headers = map(x -> joinpath(incpath, x), spinnaker_headers),
-    output_file = joinpath(outpath, "spin_api.jl"),
-    common_file = joinpath(outpath, "spin_common.jl"),
-    clang_args = [
-        "-D", "__STDC_LIMIT_MACROS",
-        "-D", "__STDC_CONSTANT_MACROS",
-        "-v"
-    ],
-    clang_diagnostics = true,
-    clang_includes = [clang_includes; incpath],
-    header_library = library_file,
-    header_wrapped = header_filter,
-    cursor_wrapped = cursor_filter
-    )
+  headers = map(x -> joinpath(incpath, x), spinnaker_headers),
+  output_file = joinpath(outpath, "spin_api.jl"),
+  common_file = joinpath(outpath, "spin_common.jl"),
+  clang_args = [
+  "-D", "__STDC_LIMIT_MACROS",
+  "-D", "__STDC_CONSTANT_MACROS",
+  "-v"
+  ],
+  clang_diagnostics = true,
+  clang_includes = [clang_includes; incpath],
+  header_library = library_file,
+  header_wrapped = header_filter,
+  cursor_wrapped = cursor_filter
+)
 
 run(context)
 
