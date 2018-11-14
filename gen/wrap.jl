@@ -3,10 +3,10 @@
 
 # wrap.jl: automatically wrap C API using Clang.jl
 
-# Implementaion guided by https://github.com/JuliaDiffEq/Sundials.jl
+# This wrapper uses the Gnuic/refactor branch of Clang.jl to provide proper
+# enumerations support. Implementation guided by https://github.com/JuliaDiffEq/Sundials.jl
 
-using Clang
-using Clang.wrap_c
+using Clang: init
 
 const incpath = normpath("/usr/include/spinnaker/spinc")
 
@@ -18,13 +18,12 @@ const outpath = normpath(@__DIR__, "..", "src", "wrapper")
 mkpath(outpath)
 
 const spinnaker_headers = readdir(incpath)
+
 const clang_path = "/usr/lib/clang/6.0"
 const clang_includes = [joinpath(clang_path, "include")]
-
-function julia_file(header::AbstractString)
-    src_name = basename(header)
-    return joinpath(outpath, string(src_name, ".jl"))
-end
+# TODO: should we use Clang.jl installation here?
+# const CLANG_INCLUDE = joinpath(@__DIR__, "..", "deps", "usr", "include", "clang-c") |> normpath
+# const CLANG_HEADERS = [joinpath(CLANG_INCLUDE, cHeader) for cHeader in readdir(CLANG_INCLUDE) if endswith(cHeader, ".h")]
 
 headerlibmap = Dict("SpinnakerC.h"       => "libSpinnaker_C",
                     "QuickSpinC.h"       => "libSpinnaker_C",
@@ -37,30 +36,35 @@ function library_file(header::AbstractString)
     if(haskey(headerlibmap, header_name))
         return headerlibmap[header_name]
     else
-        @error "Wrapping $header failed: unknown library association"
+        @warn "$header has unknown library association, using libSpinnaker_C"
+        return "libSpinnaker_C"
     end
 end
 
 # Test if header should be wrapped
-function wrap_header(top_hdr::AbstractString, cursor_header::AbstractString)
-    # Do not wrap nested includes
-    return (top_hdr == cursor_header)
+function header_filter(top_hdr::AbstractString, cursor_header::AbstractString)
+    return (top_hdr == cursor_header) # Do not wrap nested includes
 end
 
 # Test if element should be wrapped
-function wrap_cursor(name::AbstractString, cursor)
-    # Wrap only spin, and quickSpin prefaced functions
-    if typeof(cursor) == Clang.cindex.FunctionDecl
-        return occursin(r"^(quickSpin|spin)", name)
-    else
-        return true
-    end
+function cursor_filter(name::AbstractString, cursor)
+  return true
 end
+    #
+    # if typeof(cursor) == Clang.LibClang.CXCursor
+    #     # Wrap only spin, and quickSpin prefaced functions
+    #     return occursin(r"^(quickSpin|spin)", name)
+    # else
+    #     # Else, wrap everything
+    #     return true
+    # end
+
 
 # Build wrapping context
-const context = wrap_c.init(
+const context = init(
     headers = map(x -> joinpath(incpath, x), spinnaker_headers),
-    common_file  = joinpath(outpath, "definitions.jl"),
+    output_file = joinpath(outpath, "spin_api.jl"),
+    common_file = joinpath(outpath, "spin_common.jl"),
     clang_args = [
         "-D", "__STDC_LIMIT_MACROS",
         "-D", "__STDC_CONSTANT_MACROS",
@@ -68,12 +72,19 @@ const context = wrap_c.init(
     ],
     clang_diagnostics = true,
     clang_includes = [clang_includes; incpath],
-    header_outputfile = julia_file,
     header_library = library_file,
-    header_wrapped=wrap_header,
-    cursor_wrapped=wrap_cursor
+    header_wrapped = header_filter,
+    cursor_wrapped = cursor_filter
     )
 
 run(context)
+
+# Manual changes
+# spinStringGetValue Cstring -> Ptr{UInt8}
+
+# Remove unused files
+rm(joinpath(outpath, "LibTemplate.jl"))
+rm(joinpath(outpath, "ctypes.jl"))
+
 
 @info "Warpper written to $outpath"
