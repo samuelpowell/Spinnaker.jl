@@ -114,14 +114,12 @@ function acquire_images(hCam, hNodeMap, hNodeMapTLDevice)
       spinImageRelease(hResultImage[]);
     end
 
-    @info "Grabbed image $imageCnt"
-
     # Get image dimensions
     width = Ref(Csize_t(0))
     height = Ref(Csize_t(0))
     spinImageGetWidth(hResultImage[], width);
     spinImageGetHeight(hResultImage[], height);
-    @info "Image width $width, height $height"
+    @info "Grabbed image $imageCnt, width: $(width[]), height: $(height[])"
 
     # Convert image to MONO8
     hConvertedImage = Ref(spinImage(C_NULL))
