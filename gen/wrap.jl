@@ -3,8 +3,10 @@
 
 # wrap.jl: automatically wrap C API using Clang.jl
 
-# This wrapper uses the Gnuic/refactor branch of Clang.jl to provide proper
-# enumerations support. Implementation guided by https://github.com/JuliaDiffEq/Sundials.jl
+# This wrapper uses the Gnuic/refactor branch of Clang.jl to provide proper enumeration
+# support. Implementation guided by:
+#   https://github.com/JuliaDiffEq/Sundials.jl (general)
+#   https://github.com/JuliaAttic/CUDArt.jl/ (error rewriter)
 
 using Clang: init
 
@@ -21,7 +23,8 @@ const spinnaker_headers = readdir(incpath)
 
 const clang_path = "/usr/lib/clang/6.0"
 const clang_includes = [joinpath(clang_path, "include")]
-# TODO: should we use Clang.jl installation here?
+
+# TODO: should we use actually use Clang.jl installation here?
 # const CLANG_INCLUDE = joinpath(@__DIR__, "..", "deps", "usr", "include", "clang-c") |> normpath
 # const CLANG_HEADERS = [joinpath(CLANG_INCLUDE, cHeader) for cHeader in readdir(CLANG_INCLUDE) if endswith(cHeader, ".h")]
 
@@ -59,6 +62,37 @@ end
 #     return true
 # end
 
+# Add error checking to generated functions
+rewriter(arg) = arg
+# rewriter(A::Array) = [rewriter(a) for a in A]
+# rewriter(s::Symbol) = string(s)
+
+const skip_expr = []
+const skip_error_check = []
+function rewriter(ex::Expr)
+
+    # Skip sepcified expressions
+    if in(ex, skip_expr)
+        return :()
+    end
+
+    # Only process function calls
+    ex.head == :function || return ex
+
+    decl, body = ex.args[1], ex.args[2]
+    ccallexpr = body.args[1]
+    rettype = ccallexpr.args[3]
+
+    if rettype == :spinError
+        fname = decl.args[1]
+        if !in(fname, skip_error_check)
+            body.args[1] = Expr(:call, :checkerror, deepcopy(ccallexpr))
+        end
+    end
+
+    return ex
+end
+
 
 # Build wrapping context
 const context = init(
@@ -74,7 +108,8 @@ const context = init(
   clang_includes = [clang_includes; incpath],
   header_library = library_file,
   header_wrapped = header_filter,
-  cursor_wrapped = cursor_filter
+  cursor_wrapped = cursor_filter,
+  rewriter = rewriter
 )
 
 run(context)

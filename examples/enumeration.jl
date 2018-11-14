@@ -102,15 +102,15 @@ function query_interface(hInterface)
         @info "Camera model name not readable"
       end
 
-      spinCameraRelease(hCam);
+      spinCameraRelease(hCam[]);
 
     end
   else
     @info "No cameras detected"
   end
-
-  spinCameraListClear(hCameraList);
-  spinCameraListDestroy(hCameraList);
+println("DONE")
+  spinCameraListClear(hCameraList[]);
+  spinCameraListDestroy(hCameraList[]);
   return nothing
 
 end

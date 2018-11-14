@@ -13,11 +13,16 @@ include("wrapper/CEnum.jl")
 using .CEnum
 
 include("wrapper/spin_common.jl")
+
+function checkerror(err::spinError)
+  err == spinError(0) ||  @error "Spinnaker SDK error: $err"
+end
+
 include("wrapper/spin_api.jl")
 #include("wrapper/QuickSpinC.h.jl")
 #include("wrapper/SpinVideoC.h.jl")
 
-# export everything
+# export everything spin*
 foreach(names(@__MODULE__, all=true)) do s
   if startswith(string(s), "spin")
     @eval export $s
