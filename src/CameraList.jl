@@ -3,6 +3,7 @@
 
 # CameraList.jl: interface to CameraList objects
 import Base: show, length, getindex
+export CameraList
 
 """
   CameraList(::System)
@@ -71,11 +72,11 @@ function show(io::IO, camlist::CameraList)
 end
 
 """
-  getindex(::CameraList, id) -> Camera
+  getindex(::CameraList, ::Int) -> Camera
 
   Return camera by ID in specified CameraList. Note that IDs are zero-indexed.
 """
-function getindex(camlist::CameraList, id)
+function getindex(camlist::CameraList, id::Int)
   nc = length(camlist)
   if (id >= 0) && (id < nc)
     hCam = Ref(spinCamera(C_NULL))

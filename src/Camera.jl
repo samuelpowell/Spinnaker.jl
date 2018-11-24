@@ -2,6 +2,8 @@
 # Copyright (C) 2018 Samuel Powell
 
 # Camera.jl: interface to Camera objects
+export Camera, serial, model, vendor,
+       isrunning, start!, stop!, getimage
 
 """
  Spinnaker SDK Camera object
@@ -110,6 +112,17 @@ function model(cam::Camera)
 end
 
 """
+  isrunning(::Camera) -> Bool
+
+  Determine if the camera is currently acquiring images.
+"""
+function isrunning(cam::Camera)
+  pbIsStreaming = Ref(bool8_t(false))
+  spinCameraIsStreaming(cam.handle[], pbIsStreaming)
+  return (pbIsStreaming == true)
+end
+
+"""
   start!(::Camera)
 
   Start acquistion on specified camera.
@@ -122,7 +135,7 @@ end
 """
   stop!(::Camera)
 
-  Cease acquistion on specified camera.
+  Stop acquistion on specified camera.
 """
 function stop!(cam::Camera)
   spinCameraEndAcquisition(cam.handle[])
@@ -130,12 +143,45 @@ function stop!(cam::Camera)
 end
 
 """
-  isrunning(::Camera) -> Bool
+  getimage(::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
 
-  Determine if the camera is currently acquiring images.
+  Get the next image from the specified camera, blocking until available. The image
+  buffer converted to the desired output format and returned.
 """
-function isrunning(cam::Camera)
-  pbIsStreaming = Ref(bool8_t(false))
-  spinCameraIsStreaming(cam.handle[], pbIsStreaming)
-  return (pbIsStreaming == true)
+function getimage(cam::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
+  
+  imhandle = Ref(spinImage(C_NULL))
+  spinCameraGetNextImage(cam.handle[], imhandle);
+
+  isIncomplete = Ref(bool8_t(false))
+
+  spinImageIsIncomplete(imhandle[], isIncomplete);
+
+  if (isIncomplete == true)
+    imageStatus = Ref(spinImageStatus(IMAGE_NO_ERROR))
+    spinImageGetStatus(imhandle[], imageStatus)
+    spinImageRelease(imhandle[])
+    @error "Image incomplete with error $(imageStatus)"
+  end
+
+  # Create output image, convert if required
+  image = Image()
+
+  infmt = Ref(spinPixelFormatEnums(0))
+  spinImageGetPixelFormat(imhandle[], infmt)
+
+  if infmt == fmt
+    spinImageDeepCopy(imhandle[], image.handle[])
+  else
+    spinImageConvert(imhandle[], fmt, image.handle[])
+  end
+
+  # Release buffer
+  spinImageRelease(imhandle[])
+
+  return image
+
 end
+
+
+

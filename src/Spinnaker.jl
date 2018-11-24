@@ -65,6 +65,7 @@ function writable(nodeName)
 end
 
 # Include interface
+include("Image.jl")
 include("System.jl")
 include("Camera.jl")
 include("CameraList.jl")
