@@ -64,13 +64,14 @@ function writable(nodeName)
  end
 end
 
-
 # Include interface
 include("System.jl")
 include("Camera.jl")
 include("CameraList.jl")
 
-
-
+# Create a System object at runtime
+function __init__()
+  global spinsys = System()
+end
 
 end # module

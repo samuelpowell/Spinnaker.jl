@@ -7,21 +7,19 @@
  Spinnaker SDK Camera object
 
  Create a camera object by referencing a CameraList, e.g.,
- `sys = System()
-  cl = CameraList(sys)
+ `cl = CameraList()
   cam = cl[0]`
 
   The camera is initialised when created and deinitialised when garbage collected.
 """
 mutable struct Camera
-  sys::System
   handle::Ref{spinCamera}
 
-  function Camera(sys, handle)
-    @assert sys.handle[] != C_NULL
+  function Camera(handle)
+    @assert spinsys.handle[] != C_NULL
     @assert handle != C_NULL
     spinCameraInit(handle[])
-    cam = new(sys, handle)
+    cam = new(handle)
     finalizer(_release!, cam)
     return cam
   end

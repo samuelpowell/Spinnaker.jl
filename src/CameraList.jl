@@ -11,15 +11,14 @@ import Base: show, length, getindex
   enumerates available devices.
 """
 mutable struct CameraList
-  sys::System
   handle::Ref{spinCameraList}
 
-  function CameraList(sys::System)
+  function CameraList()
     hCameraList = Ref(spinCameraList(C_NULL))
     nCameras = Ref(Csize_t(0))
     spinCameraListCreateEmpty(hCameraList)
     @assert hCameraList[] != C_NULL
-    camlist = new(sys, hCameraList)
+    camlist = new(hCameraList)
     _refresh!(camlist)
     finalizer(_release!, camlist)
     return camlist
@@ -38,7 +37,7 @@ end
 # Clear the list and reload enumerated cameras
 function _refresh!(camlist::CameraList)
   spinCameraListClear(camlist.handle[])
-  spinSystemGetCameras(camlist.sys.handle[], camlist.handle[])
+  spinSystemGetCameras(spinsys.handle[], camlist.handle[])
 end
 
 """
@@ -81,7 +80,7 @@ function getindex(camlist::CameraList, id)
   if (id >= 0) && (id < nc)
     hCam = Ref(spinCamera(C_NULL))
     spinCameraListGet(camlist.handle[], id, hCam)
-    return Camera(camlist.sys, hCam)
+    return Camera(hCam)
   else
     @error "Invalid camera index"
   end
