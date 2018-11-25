@@ -3,8 +3,11 @@
 
 # Camera.jl: interface to Camera objects
 export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
-       triggermode, triggermode!, triggersource, triggersource!, trigger!,
-       autoexposure!, exposure!
+       triggermode, triggermode!,
+       triggersource, triggersource!,
+       trigger!,
+       autoexposure!, exposure!,
+       autogain!, gain!
 
 """
  Spinnaker SDK Camera object
@@ -294,7 +297,8 @@ end
   exposure!(::Camera, ::Number) -> Int
 
   Set exposure time on camera to specified number of microseconds. The requested
-  value is rounded to an integer. This function also disables automatic exposure.
+  value is rounded to an integer and clamped to range supported by the camera.
+  This function disables automatic exposure.
 """
 function exposure!(cam::Camera, t::Number)
 
@@ -333,6 +337,84 @@ function exposure!(cam::Camera, t::Number)
   spinFloatSetValue(hExposureTime[], exposureTimeToSet[]);
 
   return exposureTimeToSet[]
+
+end
+
+
+
+"""
+  autogain!(::Camera)
+
+  Set automatic exposure gain on camera.
+"""
+function autogain!(cam::Camera)
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  # Enable automatic exposure
+  hGainAuto = Ref(spinNodeHandle(C_NULL))
+  hGainAutoOn = Ref(spinNodeHandle(C_NULL))
+  gainAutoOn = Ref(Int64(0))
+
+  spinNodeMapGetNode(hNodeMap[], "ExposureAuto", hGainAuto);
+  @assert readable(hGainAuto)
+  spinEnumerationGetEntryByName(hGainAuto[], "On", hGainAutoOn)
+
+  @assert readable(hGainAutoOn)
+  spinEnumerationEntryGetIntValue(hGainAutoOn[], gainAutoOn)
+
+  @assert writable(hGainAuto)
+  spinEnumerationSetIntValue(hGainAuto[], gainAutoOn[])
+
+  return "On"
+
+end
+
+
+"""
+  gain!(::Camera, ::Number) -> Float
+
+  Set exposure gain on camera to specified number (dB). Gain is clamped to
+  range supported by camera. This function disables automatic gain.
+"""
+function gain!(cam::Camera, g::Number)
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  # Disable automatic exposure
+  hGainAuto = Ref(spinNodeHandle(C_NULL))
+  hGainAutoOff = Ref(spinNodeHandle(C_NULL))
+  gainAutoOff = Ref(Int64(0))
+
+  spinNodeMapGetNode(hNodeMap[], "ExposureAuto", hGainAuto);
+  @assert readable(hGainAuto)
+  spinEnumerationGetEntryByName(hGainAuto[], "Off", hGainAutoOff)
+
+  @assert readable(hGainAutoOff)
+  spinEnumerationEntryGetIntValue(hGainAutoOff[], gainAutoOff)
+
+  @assert writable(hGainAuto)
+  spinEnumerationSetIntValue(hGainAuto[], gainAutoOff[])
+
+  # Set manual exposure time
+  hGain = Ref(spinNodeHandle(C_NULL))
+  gainMax = Ref(Float64(0.0))
+  gainMin = Ref(Float64(0.0))
+  gainToSet = Ref(Float64(0.0))
+
+  spinNodeMapGetNode(hNodeMap[], "Gain", hGain);
+  @assert readable(hGain)
+  spinFloatGetMin(hGain[], gainMin)
+  spinFloatGetMax(hGain[], gainMax)
+
+  # Ensure exposure time does not exceed maximum
+  gainToSet[] = clamp(g, gainMin[], gainMax[])
+  @assert writable(hGain)
+  spinFloatSetValue(hGain[], gainToSet[]);
+
+  return gainToSet[]
 
 end
 
@@ -397,7 +479,8 @@ function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat)
     spinCameraGetNextImage(cam, himage_ref);
     @assert _isimagecomplete(himage_ref)
     spinImageSave(himage_ref[], fn, fmt)
-
+    spinImageRelease(himage_ref[])
+    
 end
 
 """
