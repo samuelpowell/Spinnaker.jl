@@ -121,6 +121,73 @@ function stop!(cam::Camera)
   return cam
 end
 
+
+"""
+  triggermode(::Camera) -> Bool
+
+  Return if camera trigger mode status is on (true), or off (false)
+"""
+function triggermode(cam::Camera)
+
+     hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+     spinCameraGetNodeMap(cam, hNodeMap)
+
+     hTriggerMode = Ref(spinNodeHandle(C_NULL))
+     spinNodeMapGetNode(hNodeMap[], "TriggerMode", hTriggerMode);
+     @assert readable(hTriggerMode)
+
+     hTriggerModeOnOff = Ref(spinNodeHandle(C_NULL))
+     triggerModeOnOff = Ref(Int64(0))
+     spinEnumerationGetCurrentEntry(hTriggerMode[], hTriggerModeOnOff)
+     spinEnumerationEntryGetIntValue(hTriggerModeOnOff[], triggerModeOnOff)
+
+     return triggerModeOnOff[] == 0 ? false : true
+
+end
+
+"""
+  triggermode!(::Camera, ::Bool)
+
+  Set camera trigger mode on (true) or off (false).
+"""
+function triggermode!(cam::Camera, mode::Bool)
+
+   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+   spinCameraGetNodeMap(cam, hNodeMap)
+
+   hTriggerMode = Ref(spinNodeHandle(C_NULL))
+
+   # Get trigger mode, ensure it is writable
+   spinNodeMapGetNode(hNodeMap[], "TriggerMode", hTriggerMode);
+   @assert readable(hTriggerMode)
+
+   hTriggerModeOnOff = Ref(spinNodeHandle(C_NULL))
+   triggerModeOnOff = Ref(Int64(0))
+
+   onoffstring = mode ? "On" : "Off"
+
+   spinEnumerationGetEntryByName(hTriggerMode[], onoffstring, hTriggerModeOnOff)
+   @assert readable(hTriggerModeOnOff)
+
+   spinEnumerationEntryGetIntValue(hTriggerModeOnOff[], triggerModeOnOff)
+   @assert writable(hTriggerMode)
+   spinEnumerationSetIntValue(hTriggerMode[], triggerModeOnOff[])
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function _isimagecomplete(himage_ref)
   isIncomplete = Ref(bool8_t(false))
   spinImageIsIncomplete(himage_ref[], isIncomplete);
