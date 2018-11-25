@@ -3,7 +3,8 @@
 
 # Camera.jl: interface to Camera objects
 export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
-       triggermode, triggermode!, triggersource, triggersource!, trigger!
+       triggermode, triggermode!, triggersource, triggersource!, trigger!,
+       autoexposure!, exposure!
 
 """
  Spinnaker SDK Camera object
@@ -88,7 +89,7 @@ function show(io::IO, cam::Camera)
   vendorname = vendor(cam)
   modelname = model(cam)
   serialno = serial(cam)
-  write(io, "$vendorname $modelname ($serialno)")
+  write(io, "$vendorname $modelname ($serialno): $(isrunning(cam) ? "running" : "stopped")")
 end
 
 """
@@ -260,17 +261,80 @@ function trigger!(cam::Camera)
 end
 
 
+"""
+  autoexposure!(::Camera)
+
+  Activate (continuous) automatic exposure control on specified camera.
+"""
+function autoexposure!(cam::Camera)
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hExposureAuto = Ref(spinNodeHandle(C_NULL))
+  hExposureAutoContinuous = Ref(spinNodeHandle(C_NULL))
+  exposureAutoContinuous = Ref(Int64(0))
+
+  spinNodeMapGetNode(hNodeMap[], "ExposureAuto", hExposureAuto);
+  @assert readable(hExposureAuto)
+  spinEnumerationGetEntryByName(hExposureAuto[], "Continuous", hExposureAutoContinuous)
+
+  @assert readable(hExposureAutoContinuous)
+  spinEnumerationEntryGetIntValue(hExposureAutoContinuous[], exposureAutoContinuous)
+
+  @assert writable(hExposureAuto)
+  spinEnumerationSetIntValue(hExposureAuto[], exposureAutoContinuous[])
+
+  return "Continuous"
+
+end
 
 
+"""
+  exposure!(::Camera, ::Number) -> Int
 
+  Set exposure time on camera to specified number of microseconds. The requested
+  value is rounded to an integer. This function also disables automatic exposure.
+"""
+function exposure!(cam::Camera, t::Number)
 
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
 
+  # Disable automatic exposure
+  hExposureAuto = Ref(spinNodeHandle(C_NULL))
+  hExposureAutoOff = Ref(spinNodeHandle(C_NULL))
+  exposureAutoOff = Ref(Int64(0))
 
+  spinNodeMapGetNode(hNodeMap[], "ExposureAuto", hExposureAuto);
+  @assert readable(hExposureAuto)
+  spinEnumerationGetEntryByName(hExposureAuto[], "Off", hExposureAutoOff)
 
+  @assert readable(hExposureAutoOff)
+  spinEnumerationEntryGetIntValue(hExposureAutoOff[], exposureAutoOff)
 
+  @assert writable(hExposureAuto)
+  spinEnumerationSetIntValue(hExposureAuto[], exposureAutoOff[])
 
+  # Set manual exposure time
+  hExposureTime = Ref(spinNodeHandle(C_NULL))
+  exposureTimeMax = Ref(Float64(0.0))
+  exposureTimeMin = Ref(Float64(0.0))
+  exposureTimeToSet = Ref(Float64(0.0))
 
+  spinNodeMapGetNode(hNodeMap[], "ExposureTime", hExposureTime);
+  @assert readable(hExposureTime)
+  spinFloatGetMin(hExposureTime[], exposureTimeMin)
+  spinFloatGetMax(hExposureTime[], exposureTimeMax)
 
+  # Ensure exposure time does not exceed maximum
+  exposureTimeToSet[] = clamp(t, exposureTimeMin[], exposureTimeMax[])
+  @assert writable(hExposureTime)
+  spinFloatSetValue(hExposureTime[], exposureTimeToSet[]);
+
+  return exposureTimeToSet[]
+
+end
 
 
 
@@ -295,6 +359,8 @@ end
   image buffer is converted to the desired output format and returned.
 """
 function getimage(cam::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
+
+  isrunning(cam) || @error "Unable to get image, camera is not running."
 
   # Get image handle and check it's complete
   himage_ref = Ref(spinImage(C_NULL))
