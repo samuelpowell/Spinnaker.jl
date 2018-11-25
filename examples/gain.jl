@@ -1,7 +1,7 @@
 # Spinnaker.jl: wrapper for FLIR/Point Grey Spinnaker SDK
 # Copyright (C) 2018 Samuel Powell
 
-# examples/exposure.jl: example to configure manual gain
+# examples/gain.jl: example to configure manual gain
 using Spinnaker
 
 camlist = CameraList()
