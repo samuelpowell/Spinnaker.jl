@@ -2,48 +2,49 @@
 # Copyright (C) 2018 Samuel Powell
 
 # Image.jl: interface to Image objects
-import Base: size, convert
-export bpp, offset, padding, save
+export Image, bpp, offset, padding, save
 
 """
  Spinnaker SDK Image object
 """
 mutable struct Image
-  handle::Ref{spinImage}
+  handle::spinImage
 
   function Image(handle)
     image = new(handle)
     finalizer(_release!, image)
     return image
-  end 
+  end
 end
 
+unsafe_convert(::Type{spinImage}, image::Image) = image.handle
+unsafe_convert(::Type{Ptr{spinImage}}, image::Image) = pointer_from_objref(image)
 
 function Image()
-    @assert spinsys.handle[] != C_NULL
-    handle = Ref(spinImage(C_NULL))
-    spinImageCreateEmpty(handle)
-    return Image(handle)
+    @assert spinsys.handle != C_NULL
+    himage_ref = Ref(spinImage(C_NULL))
+    spinImageCreateEmpty(himage_ref)
+    return Image(himage_ref[])
 end
 
 # Release handle to image
 function _release!(image::Image)
-    spinImageDestroy(image.handle[])
-    image.handle[] = C_NULL
+    spinImageDestroy(image)
+    image.handle = C_NULL
     return nothing
 end
 
 # Return size of image data buffer. Note that this may include metadata.
 function _buffersize(image::Image)
     sz = Ref(Csize_t(0))
-    spinImageGetBufferSize(image.handle[], sz)
+    spinImageGetBufferSize(image, sz)
     return Int(sz[])
 end
 
-# Return a pointer to the data buffer of the input image. 
-function _bufferptr(image::Image) 
+# Return a pointer to the data buffer of the input image.
+function _bufferptr(image::Image)
     ptr = Ref(Ptr{Cvoid}(0))
-    spinImageGetData(image.handle[], ptr)
+    spinImageGetData(image, ptr)
     return Ptr{UInt8}(ptr[])
 end
 
@@ -54,7 +55,7 @@ end
 """
 function convert(image::Image, fmt::spinPixelFormatEnums)
     out = Image()
-    spinImageConvert(out.handle[], fmt, image.handle[]);
+    spinImageConvert(out, fmt, image);
     return out
 end
 
@@ -65,7 +66,7 @@ end
 """
 function bpp(image::Image)
     bpp = Ref(Csize_t(0))
-    spinImageGetBitsPerPixel(image.handle[], bpp)
+    spinImageGetBitsPerPixel(image, bpp)
     return Int(bpp[])
 end
 
@@ -78,8 +79,8 @@ end
 function offset(image::Image)
     xoff = Ref(Csize_t(0))
     yoff = Ref(Csize_t(0))
-    spinImageGetOffsetX(image.handle[], xoff)
-    spinImageGetOffsetY(image.handle[], yoff)
+    spinImageGetOffsetX(image, xoff)
+    spinImageGetOffsetY(image, yoff)
     return (Int(xoff[]), Int(yoff[]))
 end
 
@@ -91,8 +92,8 @@ end
 function padding(image::Image)
     xpad = Ref(Csize_t(0))
     ypad = Ref(Csize_t(0))
-    spinImageGetPaddingX(image.handle[], xpad)
-    spinImageGetPaddingY(image.handle[], ypad)
+    spinImageGetPaddingX(image, xpad)
+    spinImageGetPaddingY(image, ypad)
     return (Int(xpad[]), Int(ypad[]))
 end
 
@@ -104,16 +105,16 @@ end
 function size(image::Image)
     width = Ref(Csize_t(0))
     height = Ref(Csize_t(0))
-    spinImageGetWidth(image.handle[], width)
-    spinImageGetHeight(image.handle[], height)
+    spinImageGetWidth(image, width)
+    spinImageGetHeight(image, height)
     return (Int(width[]), Int(height[]))
 end
 
 """
     save(fn::AbstractString, ::Image, ::spinImageFileFormat)
-    
+
     Save the input image to file `fn` in specified format.
 """
 function save(image::Image, fn::AbstractString, fmt::spinImageFileFormat)
-    spinImageSave(image.handle[], fn, fmt)
+    spinImageSave(image, fn, fmt)
 end

@@ -9,22 +9,25 @@
   System() returns new System object from which interfaces and devices can be discovered.
 """
 mutable struct System
-  handle::Ref{spinSystem}
+  handle::spinSystem
 
   function System()
-    hSystem = Ref(spinSystem(C_NULL))
-    spinSystemGetInstance(hSystem)
-    @assert hSystem[] != C_NULL
-    sys = new(hSystem)
+    hsystem_ref = Ref(spinSystem(C_NULL))
+    spinSystemGetInstance(hsystem_ref)
+    @assert hsystem_ref[] != C_NULL
+    sys = new(hsystem_ref[])
     finalizer(_release!, sys)
     return sys
   end
 end
 
+unsafe_convert(::Type{spinSystem}, sys::System) = sys.handle
+unsafe_convert(::Type{Ptr{spinSystem}}, sys::System) = pointer_from_objref(sys)
+
 # Release handle to system
 function _release!(sys::System)
-  spinSystemReleaseInstance(sys.handle[])
-  sys.handle[] = C_NULL
+  spinSystemReleaseInstance(sys)
+  sys.handle = C_NULL
   return nothing
 end
 
@@ -35,8 +38,8 @@ end
   and seperate build number.
 """
 function version(sys::System)
-  hLibraryVersion = Ref(spinLibraryVersion(0,0,0,0))
-  spinSystemGetLibraryVersion(sys.handle, hLibraryVersion)
-  libver = VersionNumber(hLibraryVersion[].major, hLibraryVersion[].minor, hLibraryVersion[].type)
-  return libver, hLibraryVersion.build
+  hlibver_ref = Ref(spinLibraryVersion(0,0,0,0))
+  spinSystemGetLibraryVersion(sys, hlibver_ref)
+  libver = VersionNumber(hlibver_ref[].major, hlibver_ref[].minor, hlibver_ref[].type)
+  return libver, hlibver_ref[].build
 end

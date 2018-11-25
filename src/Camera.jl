@@ -2,8 +2,7 @@
 # Copyright (C) 2018 Samuel Powell
 
 # Camera.jl: interface to Camera objects
-export Camera, serial, model, vendor,
-       isrunning, start!, stop!, getimage
+export serial, model, vendor, isrunning, start!, stop!, getimage
 
 """
  Spinnaker SDK Camera object
@@ -15,24 +14,47 @@ export Camera, serial, model, vendor,
   The camera is initialised when created and deinitialised when garbage collected.
 """
 mutable struct Camera
-  handle::Ref{spinCamera}
+  handle::spinCamera
 
   function Camera(handle)
-    @assert spinsys.handle[] != C_NULL
+    @assert spinsys.handle != C_NULL
     @assert handle != C_NULL
-    spinCameraInit(handle[])
+    spinCameraInit(handle)
     cam = new(handle)
     finalizer(_release!, cam)
     return cam
   end
 end
 
+unsafe_convert(::Type{spinCamera}, cam::Camera) = cam.handle
+unsafe_convert(::Type{Ptr{spinCamera}}, cam::Camera) = pointer_from_objref(cam)
+
 # Release handle to system
 function _release!(cam::Camera)
-  spinCameraDeInit(cam.handle[])
-  spinCameraRelease(cam.handle[])
-  cam.handle[] = C_NULL
+  spinCameraDeInit(cam)
+  spinCameraRelease(cam)
+  cam.handle = C_NULL
   return nothing
+end
+
+function _getTLNodeString(cam::Camera, nodename::AbstractString)
+  hNodeMapTLDevice = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetTLDeviceNodeMap(cam, hNodeMapTLDevice);
+
+  #  Get camera vendor name
+  hNode = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMapTLDevice[], nodename, hNode)
+  nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
+  nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
+  if readable(hNode)
+    spinStringGetValue(hNode[], nodestringbuf, nodestringlen);
+    nodestring = unsafe_string(pointer(nodestringbuf))
+  else
+    @warn "Could not retrieve transport layer note $node"
+    nodestring = "-"
+  end
+
+  return nodestring
 end
 
 """
@@ -40,75 +62,32 @@ end
 
   Return camera serial number (string)
 """
-function serial(cam::Camera)
-  hNodeMapTLDevice = Ref(spinNodeMapHandle(C_NULL))
-  hDeviceSerialNumber = Ref(spinNodeHandle(C_NULL))
-  deviceSerialNumber = Vector{UInt8}(undef, MAX_BUFFER_LEN)
-  lenDeviceSerialNumber = Ref(Csize_t(MAX_BUFFER_LEN))
-  spinCameraGetTLDeviceNodeMap(cam.handle[], hNodeMapTLDevice)
-  spinNodeMapGetNode(hNodeMapTLDevice[], "DeviceSerialNumber", hDeviceSerialNumber)
-  if readable(hDeviceSerialNumber[], "DeviceSerialNumber")
-    spinStringGetValue(hDeviceSerialNumber[], deviceSerialNumber, lenDeviceSerialNumber)
-    serialno = unsafe_string(pointer(deviceSerialNumber))
-  else
-    @warn "Cannot retrieve camera serial number"
-    serialno = ""
-  end
-  return serialno
-end
+serial(cam::Camera) = _getTLNodeString(cam, "DeviceSerialNumber")
 
 """
-  vendor(::Camera)
+  vendor(::Camera) -> String
 
-  Return vendor name for specified camera.
+  Return vendor name of specified camera.
 """
-function vendor(cam::Camera)
-
-  hNodeMapTLDevice = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetTLDeviceNodeMap(cam.handle[], hNodeMapTLDevice);
-
-  #  Get camera vendor name
-  hDeviceVendorName = Ref(spinNodeHandle(C_NULL))
-  spinNodeMapGetNode(hNodeMapTLDevice[], "DeviceVendorName", hDeviceVendorName)
-  deviceVendorName = Vector{UInt8}(undef, MAX_BUFFER_LEN)
-  lenDeviceVendorName = Ref(Csize_t(MAX_BUFFER_LEN))
-  if readable(hDeviceVendorName)
-    spinStringGetValue(hDeviceVendorName[], deviceVendorName, lenDeviceVendorName);
-    vendor = unsafe_string(pointer(deviceVendorName))
-  else
-    @warn "Could not retrieve vendor name"
-    vendor = "-"
-  end
-
-  return vendor
-
-end
+vendor(cam::Camera) = _getTLNodeString(cam, "DeviceVendorName")
 
 """
-  model(::Camera)
+  model(::Camera) -> String
 
-  Return model name for specified camera.
+  Return model name of specified camera.
 """
-function model(cam::Camera)
+model(cam::Camera) = _getTLNodeString(cam, "DeviceModelName")
 
-  hNodeMapTLDevice = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetTLDeviceNodeMap(cam.handle[], hNodeMapTLDevice);
+"""
+  show(::IO, ::Camera)
 
-  # Get camera model name
-  hDeviceModelName = Ref(spinNodeHandle(C_NULL))
-  spinNodeMapGetNode(hNodeMapTLDevice[], "DeviceModelName", hDeviceModelName);
-  deviceModelName = Vector{UInt8}(undef, MAX_BUFFER_LEN)
-  lenDeviceModelName = Ref(Csize_t(MAX_BUFFER_LEN))
-  if readable(hDeviceModelName)
-    spinStringGetValue(hDeviceModelName[], deviceModelName, lenDeviceModelName);
-    model = unsafe_string(pointer(deviceModelName))
-  else
-    @warn "Could not retrieve model name"
-    model = "model name not readable"
-  end
-
-  return model
-
+  Write details of camera to supplied IO.
+"""
+function show(io::IO, cam::Camera)
+  vendorname = vendor(cam)
+  modelname = model(cam)
+  serialno = serial(cam)
+  write(io, "$vendorname $modelname ($serialno)")
 end
 
 """
@@ -118,7 +97,7 @@ end
 """
 function isrunning(cam::Camera)
   pbIsStreaming = Ref(bool8_t(false))
-  spinCameraIsStreaming(cam.handle[], pbIsStreaming)
+  spinCameraIsStreaming(cam, pbIsStreaming)
   return (pbIsStreaming == true)
 end
 
@@ -128,8 +107,8 @@ end
   Start acquistion on specified camera.
 """
 function start!(cam::Camera)
-  spinCameraBeginAcquisition(cam.handle[])
-  return nothing
+  spinCameraBeginAcquisition(cam)
+  return cam
 end
 
 """
@@ -138,8 +117,8 @@ end
   Stop acquistion on specified camera.
 """
 function stop!(cam::Camera)
-  spinCameraEndAcquisition(cam.handle[])
-  return nothing
+  spinCameraEndAcquisition(cam)
+  return cam
 end
 
 """
@@ -149,9 +128,9 @@ end
   buffer converted to the desired output format and returned.
 """
 function getimage(cam::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
-  
+
   imhandle = Ref(spinImage(C_NULL))
-  spinCameraGetNextImage(cam.handle[], imhandle);
+  spinCameraGetNextImage(cam, imhandle);
 
   isIncomplete = Ref(bool8_t(false))
 
@@ -171,9 +150,9 @@ function getimage(cam::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
   spinImageGetPixelFormat(imhandle[], infmt)
 
   if infmt == fmt
-    spinImageDeepCopy(imhandle[], image.handle[])
+    spinImageDeepCopy(imhandle[], image)
   else
-    spinImageConvert(imhandle[], fmt, image.handle[])
+    spinImageConvert(imhandle[], fmt, image)
   end
 
   # Release buffer
@@ -182,6 +161,3 @@ function getimage(cam::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
   return image
 
 end
-
-
-

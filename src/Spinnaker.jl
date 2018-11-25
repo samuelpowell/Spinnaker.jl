@@ -4,6 +4,8 @@
 module Spinnaker
 
 import Libdl
+import Base: unsafe_convert, show, length, getindex, size, convert
+
 export System, Camera, CameraList
 
 # Include build configuration
