@@ -2,7 +2,7 @@
 # Copyright (C) 2018 Samuel Powell
 
 # Camera.jl: interface to Camera objects
-export serial, model, vendor, isrunning, start!, stop!, getimage
+export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage
 
 """
  Spinnaker SDK Camera object
@@ -121,43 +121,88 @@ function stop!(cam::Camera)
   return cam
 end
 
-"""
-  getimage(::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
+function _isimagecomplete(himage_ref)
+  isIncomplete = Ref(bool8_t(false))
+  spinImageIsIncomplete(himage_ref[], isIncomplete);
+  if isIncomplete == true
+    imageStatus = Ref(spinImageStatus(IMAGE_NO_ERROR))
+    spinImageGetStatus(himage_ref[], imageStatus)
+    spinImageRelease(himage_ref[])
+    @warn "Image incomplete with error $(imageStatus)"
+    return false
+  else
+    return true
+  end
+end
 
-  Get the next image from the specified camera, blocking until available. The image
-  buffer converted to the desired output format and returned.
+"""
+  getimage(::Camera, fmt = PixelFormat_Mono8) -> Image
+
+  Copy the next image from the specified camera, blocking until available. The
+  image buffer is converted to the desired output format and returned.
 """
 function getimage(cam::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
 
-  imhandle = Ref(spinImage(C_NULL))
-  spinCameraGetNextImage(cam, imhandle);
-
-  isIncomplete = Ref(bool8_t(false))
-
-  spinImageIsIncomplete(imhandle[], isIncomplete);
-
-  if (isIncomplete == true)
-    imageStatus = Ref(spinImageStatus(IMAGE_NO_ERROR))
-    spinImageGetStatus(imhandle[], imageStatus)
-    spinImageRelease(imhandle[])
-    @error "Image incomplete with error $(imageStatus)"
-  end
+  # Get image handle and check it's complete
+  himage_ref = Ref(spinImage(C_NULL))
+  spinCameraGetNextImage(cam, himage_ref);
+  @assert _isimagecomplete(himage_ref)
 
   # Create output image, convert if required
   image = Image()
-
   infmt = Ref(spinPixelFormatEnums(0))
-  spinImageGetPixelFormat(imhandle[], infmt)
-
+  spinImageGetPixelFormat(himage_ref[], infmt)
   if infmt == fmt
-    spinImageDeepCopy(imhandle[], image)
+    spinImageDeepCopy(himage_ref[], image)
   else
-    spinImageConvert(imhandle[], fmt, image)
+    spinImageConvert(himage_ref[], fmt, image)
   end
 
   # Release buffer
-  spinImageRelease(imhandle[])
+  spinImageRelease(himage_ref[])
 
   return image
 
+end
+
+"""
+    saveimage(fn::AbstractString, ::Image, ::spinImageFileFormat)
+
+    Save the next image from the specified camera to file `fn`, blocking until
+    available.
+"""
+function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat)
+
+    # Get image handle and check it's complete
+    himage_ref = Ref(spinImage(C_NULL))
+    spinCameraGetNextImage(cam, himage_ref);
+    @assert _isimagecomplete(himage_ref)
+    spinImageSave(himage_ref[], fn, fmt)
+
+end
+
+"""
+  getbufferimage(::Camera) -> Image
+
+  Get the next image from the specified camera, blocking until available. The
+  returned image is held in the image buffer, and must be released to enable
+  continuing capture by calling `release(::Image)`.
+"""
+function getbufferimage(cam::Camera)
+  @error "Not implemented"
+end
+
+"""
+  getimagearray(cam::Camera) -> Array, Dict
+
+  Copy the next image from the specified camera as a Julia array, with
+  associated image metadata. Since the camera data may be packed, the function
+  converts the data to the smallest suitable fixed point data type by default.
+
+  Mono_8          => FixedPoint{UInt8, 8}
+  Mono_12/Packed  => FixedPoint{UInt16, 12}
+  Mono_16/Packed  => FixedPoint{UInt16, 16}
+"""
+function getimagearray(cam::Camera)
+  @error "Not implemented"
 end
