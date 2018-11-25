@@ -2,7 +2,8 @@
 # Copyright (C) 2018 Samuel Powell
 
 # Camera.jl: interface to Camera objects
-export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage
+export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
+       triggermode, triggermode!, triggersource, triggersource!, trigger!
 
 """
  Spinnaker SDK Camera object
@@ -173,7 +174,84 @@ function triggermode!(cam::Camera, mode::Bool)
    @assert writable(hTriggerMode)
    spinEnumerationSetIntValue(hTriggerMode[], triggerModeOnOff[])
 
+   return mode
+
 end
+
+"""
+  triggersource!(::Camera, ::spinTriggerSourceEnums)
+
+  Set camera to use specified trigger source. Trigger mode is disabled during
+  update and restored after new source is set.
+"""
+function triggersource!(cam::Camera, src::spinTriggerSourceEnums)
+
+  # Save current trigger mode
+  initmode = triggermode(cam)
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hTriggerSource = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], "TriggerSource", hTriggerSource);
+  @assert writable(hTriggerSource)
+  spinEnumerationSetIntValue(hTriggerSource[], src);
+
+  # Restore initial trigger mode
+  triggermode!(cam, initmode)
+
+  return src
+
+end
+
+"""
+  triggersource(::Camera) -> spinTriggerSourceEnums
+
+  Return current camera trigger source.
+"""
+function triggersource(cam::Camera)
+
+
+    hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+    spinCameraGetNodeMap(cam, hNodeMap)
+
+    hTriggerSource = Ref(spinNodeHandle(C_NULL))
+    spinNodeMapGetNode(hNodeMap[], "TriggerSource", hTriggerSource);
+    @assert readable(hTriggerSource)
+
+    hTriggerSourceEnum = Ref(spinNodeHandle(C_NULL))
+    triggerSourceVal = Ref(Int64(0))
+    spinEnumerationGetCurrentEntry(hTriggerSource[], hTriggerSourceEnum)
+    spinEnumerationEntryGetIntValue(hTriggerSourceEnum[], triggerSourceVal)
+
+    return spinTriggerSourceEnums(triggerSourceVal[])
+
+end
+
+"""
+  trigger!(::Camera)
+
+  Emit software trigger to specified camera.
+"""
+function trigger!(cam::Camera)
+
+  trgsft = triggersource(cam) == spinTriggerSourceEnums(0)
+  trgsft || @error "Camera is not set to software trigger source"
+
+  trgarm = triggermode(cam) == true
+  trgarm || @error "Camera is not set to trigger mode"
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hTriggerSoftware = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], "TriggerSoftware", hTriggerSoftware);
+  @assert writable(hTriggerSoftware)
+  spinCommandExecute(hTriggerSoftware[])
+
+end
+
+
 
 
 
