@@ -142,16 +142,18 @@ function triggermode(cam::Camera)
      spinEnumerationGetCurrentEntry(hTriggerMode[], hTriggerModeOnOff)
      spinEnumerationEntryGetIntValue(hTriggerModeOnOff[], triggerModeOnOff)
 
-     return triggerModeOnOff[] == 0 ? false : true
+     # TODO: Return this to getting the Symbolic value - as trigger source has
+     #       demonstrated, the mapping to the header may not be useful
+     return triggerModeOnOff[] == 0 ? "Off" : "On"
 
 end
 
 """
   triggermode!(::Camera, ::Bool)
 
-  Set camera trigger mode on (true) or off (false).
+  Set camera trigger mode.
 """
-function triggermode!(cam::Camera, mode::Bool)
+function triggermode!(cam::Camera, mode::AbstractString)
 
    hNodeMap = Ref(spinNodeMapHandle(C_NULL))
    spinCameraGetNodeMap(cam, hNodeMap)
@@ -165,9 +167,7 @@ function triggermode!(cam::Camera, mode::Bool)
    hTriggerModeOnOff = Ref(spinNodeHandle(C_NULL))
    triggerModeOnOff = Ref(Int64(0))
 
-   onoffstring = mode ? "On" : "Off"
-
-   spinEnumerationGetEntryByName(hTriggerMode[], onoffstring, hTriggerModeOnOff)
+   spinEnumerationGetEntryByName(hTriggerMode[], mode, hTriggerModeOnOff)
    @assert readable(hTriggerModeOnOff)
 
    spinEnumerationEntryGetIntValue(hTriggerModeOnOff[], triggerModeOnOff)
@@ -179,12 +179,12 @@ function triggermode!(cam::Camera, mode::Bool)
 end
 
 """
-  triggersource!(::Camera, ::spinTriggerSourceEnums)
+  triggersource!(::Camera, ::AbstractString)
 
   Set camera to use specified trigger source. Trigger mode is disabled during
   update and restored after new source is set.
 """
-function triggersource!(cam::Camera, src::spinTriggerSourceEnums)
+function triggersource!(cam::Camera, src::AbstractString)
 
   # Save current trigger mode
   initmode = triggermode(cam)
@@ -194,8 +194,15 @@ function triggersource!(cam::Camera, src::spinTriggerSourceEnums)
 
   hTriggerSource = Ref(spinNodeHandle(C_NULL))
   spinNodeMapGetNode(hNodeMap[], "TriggerSource", hTriggerSource);
+
+  hTriggerSourceNode = Ref(spinNodeHandle(C_NULL))
+  triggerSourceVal = Ref(Int64(0))
+  spinEnumerationGetEntryByName(hTriggerSource[], src, hTriggerSourceNode)
+  @assert readable(hTriggerSourceNode)
+  spinEnumerationEntryGetIntValue(hTriggerSourceNode[], triggerSourceVal)
+
   @assert writable(hTriggerSource)
-  spinEnumerationSetIntValue(hTriggerSource[], src);
+  spinEnumerationSetIntValue(hTriggerSource[], triggerSourceVal[]);
 
   # Restore initial trigger mode
   triggermode!(cam, initmode)
@@ -220,11 +227,13 @@ function triggersource(cam::Camera)
     @assert readable(hTriggerSource)
 
     hTriggerSourceEnum = Ref(spinNodeHandle(C_NULL))
-    triggerSourceVal = Ref(Int64(0))
-    spinEnumerationGetCurrentEntry(hTriggerSource[], hTriggerSourceEnum)
-    spinEnumerationEntryGetIntValue(hTriggerSourceEnum[], triggerSourceVal)
+    nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
+    nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
 
-    return spinTriggerSourceEnums(triggerSourceVal[])
+    spinEnumerationGetCurrentEntry(hTriggerSource[], hTriggerSourceEnum)
+    spinEnumerationEntryGetSymbolic(hTriggerSourceEnum[], nodestringbuf, nodestringlen)
+
+    return unsafe_string(pointer(nodestringbuf))
 
 end
 
@@ -235,10 +244,10 @@ end
 """
 function trigger!(cam::Camera)
 
-  trgsft = triggersource(cam) == spinTriggerSourceEnums(0)
+  trgsft = triggersource(cam) == "Software"
   trgsft || @error "Camera is not set to software trigger source"
 
-  trgarm = triggermode(cam) == true
+  trgarm = triggermode(cam) == "On"
   trgarm || @error "Camera is not set to trigger mode"
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
@@ -246,7 +255,6 @@ function trigger!(cam::Camera)
 
   hTriggerSoftware = Ref(spinNodeHandle(C_NULL))
   spinNodeMapGetNode(hNodeMap[], "TriggerSoftware", hTriggerSoftware);
-  @assert writable(hTriggerSoftware)
   spinCommandExecute(hTriggerSoftware[])
 
 end
