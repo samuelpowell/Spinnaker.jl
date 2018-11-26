@@ -48,6 +48,7 @@ end
 # Release handle to system
 function _release!(cam::Camera)
   if cam.handle != C_NULL
+    stop!(cam)
     spinCameraDeInit(cam)
     spinCameraRelease(cam)
     cam.handle = C_NULL
