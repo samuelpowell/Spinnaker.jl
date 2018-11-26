@@ -6,8 +6,9 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
        triggermode, triggermode!,
        triggersource, triggersource!,
        trigger!,
-       autoexposure!, exposure!,
-       autogain!, gain!
+       exposure!,
+       gain!,
+       adcbits, adcbits!
 
 """
  Spinnaker SDK Camera object
@@ -34,6 +35,12 @@ end
 unsafe_convert(::Type{spinCamera}, cam::Camera) = cam.handle
 unsafe_convert(::Type{Ptr{spinCamera}}, cam::Camera) = pointer_from_objref(cam)
 
+function _reinit(cam::Camera)
+  spinCameraDeInit(cam)
+  spinCameraInit(cam)
+  return cam
+end
+
 # Release handle to system
 function _release!(cam::Camera)
   spinCameraDeInit(cam)
@@ -44,7 +51,7 @@ end
 
 function _getTLNodeString(cam::Camera, nodename::AbstractString)
   hNodeMapTLDevice = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetTLDeviceNodeMap(cam, hNodeMapTLDevice);
+  spinCameraGetTLDeviceNodeMap(cam, hNodeMapTLDevice)
 
   #  Get camera vendor name
   hNode = Ref(spinNodeHandle(C_NULL))
@@ -52,7 +59,7 @@ function _getTLNodeString(cam::Camera, nodename::AbstractString)
   nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
   nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
   if readable(hNode)
-    spinStringGetValue(hNode[], nodestringbuf, nodestringlen);
+    spinStringGetValue(hNode[], nodestringbuf, nodestringlen)
     nodestring = unsafe_string(pointer(nodestringbuf))
   else
     @warn "Could not retrieve transport layer note $node"
@@ -61,6 +68,10 @@ function _getTLNodeString(cam::Camera, nodename::AbstractString)
 
   return nodestring
 end
+
+###
+### Device Control
+###
 
 """
   serial(::Camera) -> String
@@ -95,6 +106,12 @@ function show(io::IO, cam::Camera)
   write(io, "$vendorname $modelname ($serialno): $(isrunning(cam) ? "running" : "stopped")")
 end
 
+
+
+###
+### Acuqisition control
+###
+
 """
   isrunning(::Camera) -> Bool
 
@@ -125,7 +142,6 @@ function stop!(cam::Camera)
   spinCameraEndAcquisition(cam)
   return cam
 end
-
 
 """
   triggermode(::Camera) -> Bool
@@ -265,11 +281,11 @@ end
 
 
 """
-  autoexposure!(::Camera)
+  exposure!(::Camera)
 
   Activate (continuous) automatic exposure control on specified camera.
 """
-function autoexposure!(cam::Camera)
+function exposure!(cam::Camera)
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
@@ -340,14 +356,16 @@ function exposure!(cam::Camera, t::Number)
 
 end
 
-
+###
+### Analog Control
+###
 
 """
-  autogain!(::Camera)
+  gain!(::Camera)
 
   Set automatic exposure gain on camera.
 """
-function autogain!(cam::Camera)
+function gain!(cam::Camera)
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
@@ -420,6 +438,82 @@ end
 
 
 
+
+###
+### Image Format Control
+###
+
+@enum ADCBITS ADCBITS_Bit10 ADCBITS_Bit12
+const ADCBITS_strings = Dict(ADCBITS_Bit10=>"Bit10",
+                             ADCBITS_Bit12=>"Bit12")
+
+"""
+  adcbits(::Camera)
+
+  Return ADC bit depth.
+
+  TODO: Note that camera is de-initialised and re-initalised in order to gain
+  access to registers.
+"""
+function adcbits(cam::Camera)
+
+  _reinit(cam)
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hADCBitDepth = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], "AdcBitDepth", hADCBitDepth);
+  @assert readable(hADCBitDepth)
+
+  hADCBitDepthEnum = Ref(spinNodeHandle(C_NULL))
+  nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
+  nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
+
+  spinEnumerationGetCurrentEntry(hADCBitDepth[], hADCBitDepthEnum)
+  spinEnumerationEntryGetSymbolic(hADCBitDepthEnum[], nodestringbuf, nodestringlen)
+
+  return unsafe_string(pointer(nodestringbuf))
+
+end
+
+"""
+  adcbits!(::Camera, ::ADCBITS)
+
+  Set ADC bit depth.
+
+  TODO: Note that camera is de-initialised and re-initalised in order to gain
+  access to registers.
+"""
+function adcbits!(cam::Camera, bits::ADCBITS)
+
+  _reinit(cam)
+
+   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+   spinCameraGetNodeMap(cam, hNodeMap)
+
+   hADCBitDepth = Ref(spinNodeHandle(C_NULL))
+
+   # Get ADC bit depth, ensure it is writable
+   spinNodeMapGetNode(hNodeMap[], "AdcBitDepth", hADCBitDepth);
+   @assert readable(hADCBitDepth)
+
+   hADCBitDepthVal = Ref(spinNodeHandle(C_NULL))
+   ADCBitDepthVal = Ref(Int64(0))
+
+   spinEnumerationGetEntryByName(hADCBitDepth[], ADCBITS_strings[bits], hADCBitDepthVal)
+   @assert readable(hADCBitDepthVal)
+
+   spinEnumerationEntryGetIntValue(hADCBitDepthVal[], ADCBitDepthVal)
+   @assert writable(hADCBitDepth)
+   spinEnumerationSetIntValue(hADCBitDepth[], ADCBitDepthVal[])
+
+   return bits
+
+end
+
+
+
 function _isimagecomplete(himage_ref)
   isIncomplete = Ref(bool8_t(false))
   spinImageIsIncomplete(himage_ref[], isIncomplete);
@@ -466,6 +560,9 @@ function getimage(cam::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
 
 end
 
+
+
+
 """
     saveimage(fn::AbstractString, ::Image, ::spinImageFileFormat)
 
@@ -480,7 +577,7 @@ function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat)
     @assert _isimagecomplete(himage_ref)
     spinImageSave(himage_ref[], fn, fmt)
     spinImageRelease(himage_ref[])
-    
+
 end
 
 """
