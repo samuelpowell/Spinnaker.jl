@@ -1004,7 +1004,7 @@ function spinEnumerationEntryGetEnumValue(hNode, pValue)
 end
 
 function spinEnumerationEntryGetSymbolic(hNode, pBuf, pBufLen)
-    checkerror(ccall((:spinEnumerationEntryGetSymbolic, libSpinnaker_C), spinError, (spinNodeHandle, Cstring, Ptr{Csize_t}), hNode, pBuf, pBufLen))
+    checkerror(ccall((:spinEnumerationEntryGetSymbolic, libSpinnaker_C), spinError, (spinNodeHandle, Ptr{UInt8}, Ptr{Csize_t}), hNode, pBuf, pBufLen))
 end
 
 function spinBooleanSetValue(hNode, value)

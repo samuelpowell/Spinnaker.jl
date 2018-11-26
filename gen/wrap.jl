@@ -115,7 +115,9 @@ const context = init(
 run(context)
 
 # Manual changes
+@warn "Manual changes to wrapper are required, see wrap.jl"
 # spinStringGetValue Cstring -> Ptr{UInt8}
+# spinEnumerationEntryGetSymbolic Cstrong -> Ptr{UInt8}
 
 # Remove unused files
 rm(joinpath(outpath, "LibTemplate.jl"))

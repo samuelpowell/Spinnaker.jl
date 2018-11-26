@@ -4,6 +4,9 @@
 module Spinnaker
 
 import Libdl
+import Base: unsafe_convert, show, length, getindex, size, convert
+
+export System, Camera, CameraList
 
 # Include build configuration
 try
@@ -21,19 +24,32 @@ using .CEnum
 include("wrapper/spin_common.jl")
 
 function checkerror(err::spinError)
-  err == spinError(0) ||  @error "Spinnaker SDK error: $err"
+  if err != spinError(0)
+    throw(ErrorException("Spinnaker SDK error: $err"))
+  end
   return nothing
 end
 
 include("wrapper/spin_api.jl")
-#include("wrapper/QuickSpinC.h.jl")
-#include("wrapper/SpinVideoC.h.jl")
 
 # export everything spin*
 foreach(names(@__MODULE__, all=true)) do s
   if startswith(string(s), "spin")
     @eval export $s
   end
+end
+
+# Include interface
+include("Image.jl")
+include("ImageData.jl")
+include("System.jl")
+include("Camera.jl")
+include("CameraList.jl")
+include("Nodes.jl")
+
+# Create a System object at runtime
+function __init__()
+  global spinsys = System()
 end
 
 end # module
