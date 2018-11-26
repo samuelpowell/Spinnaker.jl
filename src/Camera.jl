@@ -8,7 +8,8 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
        trigger!,
        exposure!,
        gain!,
-       adcbits, adcbits!
+       adcbits, adcbits!,
+       gammaenable!
 
 """
  Spinnaker SDK Camera object
@@ -511,6 +512,44 @@ function adcbits!(cam::Camera, bits::ADCBITS)
    return bits
 
 end
+
+
+
+"""
+  gammaenable!(::Camera, ::Bool) -> Bool
+
+  Enable or disable gamma correction on camera.
+"""
+function gammaenable!(cam::Camera, en::Bool)
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  # Set gamma control
+  hGammaEnable = Ref(spinNodeHandle(C_NULL))
+  gamma_en = Ref(bool8_t(en ? 1 : 0))
+
+  # Write mode and readback
+  spinNodeMapGetNode(hNodeMap[], "GammaEnable", hGammaEnable);
+  @assert writable(hGammaEnable)
+  spinBooleanSetValue(hGammaEnable[], gamma_en[])
+  spinBooleanGetValue(hGammaEnable[], gamma_en)
+
+  return gamma_en[] == 1 ? true : false
+
+end
+
+
+
+
+
+
+
+
+
+###
+### Image acquistion
+###
 
 
 
