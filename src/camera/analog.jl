@@ -8,7 +8,7 @@
 
   Set automatic exposure gain on camera.
 """
-gain!(cam::Camera) = IEnumNode!(cam, "ExposureAuto", "On")
+gain!(cam::Camera) = IEnumNode!(cam, "GainAuto", "Continuous")
 
 """
   gain!(::Camera, ::Number) -> Float
@@ -17,6 +17,6 @@ gain!(cam::Camera) = IEnumNode!(cam, "ExposureAuto", "On")
   range supported by camera. This function disables automatic gain.
 """
 function gain!(cam::Camera, g)
-  IEnumNode!(cam, "ExposureAuto", "Off")
+  IEnumNode!(cam, "GainAuto", "Off")
   IFloatNode!(cam, "Gain", g)
 end

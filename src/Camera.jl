@@ -91,7 +91,7 @@ function show(io::IO, cam::Camera)
   vendorname = vendor(cam)
   modelname = model(cam)
   serialno = serial(cam)
-  write(io, "$vendorname $modelname ($serialno): $(isrunning(cam) ? "running" : "stopped")")
+  write(io, "$vendorname $modelname ($serialno)")
 end
 
 #
@@ -128,31 +128,20 @@ function _isimagecomplete(himage_ref)
 end
 
 """
-  getimage(::Camera, fmt = PixelFormat_Mono8) -> Image
+  getimage(::Camera) -> Image
 
-  Copy the next image from the specified camera, blocking until available. The
-  image buffer is converted to the desired output format and returned.
+  Copy the next image from the specified camera, blocking until available.
 """
-function getimage(cam::Camera, fmt::spinPixelFormatEnums = PixelFormat_Mono8)
-
-  isrunning(cam) || @error "Unable to get image, camera is not running."
+function getimage(cam::Camera)
 
   # Get image handle and check it's complete
   himage_ref = Ref(spinImage(C_NULL))
   spinCameraGetNextImage(cam, himage_ref);
   @assert _isimagecomplete(himage_ref)
 
-  # Create output image, convert if required
+  # Create output image, copy and release buffer
   image = Image()
-  infmt = Ref(spinPixelFormatEnums(0))
-  spinImageGetPixelFormat(himage_ref[], infmt)
-  if infmt == fmt
-    spinImageDeepCopy(himage_ref[], image)
-  else
-    spinImageConvert(himage_ref[], fmt, image)
-  end
-
-  # Release buffer
+  spinImageDeepCopy(himage_ref[], image)
   spinImageRelease(himage_ref[])
 
   return image
@@ -186,20 +175,5 @@ end
   continuing capture by calling `release(::Image)`.
 """
 function getbufferimage(cam::Camera)
-  @error "Not implemented"
-end
-
-"""
-  getimagearray(cam::Camera) -> Array, Dict
-
-  Copy the next image from the specified camera as a Julia array, with
-  associated image metadata. Since the camera data may be packed, the function
-  converts the data to the smallest suitable fixed point data type by default.
-
-  Mono_8          => FixedPoint{UInt8, 8}
-  Mono_12/Packed  => FixedPoint{UInt16, 12}
-  Mono_16/Packed  => FixedPoint{UInt16, 16}
-"""
-function getimagearray(cam::Camera)
   @error "Not implemented"
 end

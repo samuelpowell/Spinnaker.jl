@@ -34,6 +34,17 @@ function _release!(image::Image)
     return nothing
 end
 
+"""
+  show(::IO, ::Image)
+
+  Write details of camera to supplied IO.
+"""
+function show(io::IO, image::Image)
+    pixfmt = Ref(spinPixelFormatEnums(0))
+    spinImageGetPixelFormat(image, pixfmt)
+    write(io, "Spinnaker Image, $(size(image)), $(bpp(image))bpp, $(pixfmt[])")
+end
+
 # Return size of image data buffer. Note that this may include metadata.
 function _buffersize(image::Image)
     sz = Ref(Csize_t(0))

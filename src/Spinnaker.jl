@@ -39,6 +39,7 @@ end
 
 # Include interface
 include("Image.jl")
+include("ImageData.jl")
 include("System.jl")
 include("Camera.jl")
 include("CameraList.jl")

@@ -194,7 +194,7 @@ function IFloatNode!(cam::Camera,
 
   # Clamp and set range
   writable(hNode) || @error "Node $name is not writable"
-  spinFloatSetValue(hNode[], clamp(value, IFloatNodeRange(cam, name)...))
+  spinFloatSetValue(hNode[], Float64(clamp(value, IFloatNodeRange(cam, name)...)))
   spinFloatGetValue(hNode[], hsetvalue)
 
   return hsetvalue[]
@@ -241,8 +241,8 @@ function IBooleanNode(cam::Camera, name::String, value::Bool)
   writable(hNode) || @error "Node $name is not writable"
 
   # Get and return value
-  spinBooleanSetValue(hGammaEnable[], value)
-  spinBooleanGetValue(hGammaEnable[], hval)
+  spinBooleanSetValue(hNode[], value)
+  spinBooleanGetValue(hNode[], hval)
 
   return hval[] == 1 ? true : false
 

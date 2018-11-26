@@ -106,7 +106,7 @@ image is available.
 To copy the image from the camera buffer, and release the buffer for acquisition:
 
 ```julia
-image = getimage(cam, Spinnaker.PixelFormat_Mono8)
+julia> image = getimage(cam)
 ```
 
 The resulting `image` is an opaque handle to a Spinnaker image object. These
@@ -117,8 +117,10 @@ to the underlying image data is also available. If the image format is unpacked
 data can be provided through an AbstractArray interface:
 
 ```julia
-imarr = ImageData(image)
-imraw = deepcopy(imarr)
+julia> imarr = ImageData(image)
+Spinnaker Image, (1440, 1080), 16bpp, PixelFormat_Mono16(1)
+
+julia> imraw = deepcopy(imarr)
 ```
 
 Alternatively one may directly save the image to disc:
@@ -138,7 +140,7 @@ ID      Serial No.      Description
 0       17458441        FLIR Blackfly S BFS-U3-16S2M
 
 julia> cam = camlist[0]
-FLIR Blackfly S BFS-U3-16S2M (17458441): stopped
+FLIR Blackfly S BFS-U3-16S2M (XXXXXXXX)
 
 julia> triggersource!(cam, "Software")
 "Software"
@@ -147,12 +149,12 @@ julia> triggermode!(cam, "On")
 "On"
 
 julia> start!(cam)
-FLIR Blackfly S BFS-U3-16S2M (17458441): running
+FLIR Blackfly S BFS-U3-16S2M (XXXXXXXX)
 
 julia> trigger!(cam)
 
 julia> saveimage(cam, joinpath(@__DIR__, "test.png"), spinImageFileFormat(6))
 
 julia> stop!(cam)
-FLIR Blackfly S BFS-U3-16S2M (17458441): stopped
+FLIR Blackfly S BFS-U3-16S2M (XXXXXXXX)
 ```
