@@ -24,7 +24,7 @@ struct ImageData{T,N} <: AbstractArray{T,N}
         catch e
             throw(e)
         end
-        @assert sizeof(T) * prod(size(image)) < _buffersize(image)
+        @assert sizeof(T) * prod(size(image)) <= _buffersize(image)
         rawptr = _bufferptr(image)
         typptr = Ptr{T}(rawptr)
         data = unsafe_wrap(Array, typptr, size(image));
