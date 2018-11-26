@@ -9,7 +9,8 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
        exposure!,
        gain!,
        adcbits, adcbits!,
-       gammaenable!
+       gammaenable!,
+       pixelformat, pixelformat!
 
 """
  Spinnaker SDK Camera object
@@ -513,8 +514,6 @@ function adcbits!(cam::Camera, bits::ADCBITS)
 
 end
 
-
-
 """
   gammaenable!(::Camera, ::Bool) -> Bool
 
@@ -540,9 +539,70 @@ function gammaenable!(cam::Camera, en::Bool)
 end
 
 
+@enum PIXELFORMAT PIXELFORMAT_Mono8 PIXELFORMAT_Mono12p PIXELFORMAT_Mono12Packed PIXELFORMAT_Mono16
+const PIXELFORMAT_strings = Dict(PIXELFORMAT_Mono8=>"Mono8",
+                                 PIXELFORMAT_Mono12p=>"Mono12p",
+                                 PIXELFORMAT_Mono12Packed=>"Mono12Packed",
+                                 PIXELFORMAT_Mono16=>"Mono16")
 
+"""
+  pixelformat(::Camera)
 
+  Return camera pixel format.
+"""
+function pixelformat(cam::Camera)
 
+  #_reinit(cam)
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hPixelFormat = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], "PixelFormat", hPixelFormat);
+  @assert readable(hPixelFormat)
+
+  hPixelFormatEnum = Ref(spinNodeHandle(C_NULL))
+  nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
+  nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
+
+  spinEnumerationGetCurrentEntry(hPixelFormat[], hPixelFormatEnum)
+  spinEnumerationEntryGetSymbolic(hPixelFormatEnum[], nodestringbuf, nodestringlen)
+
+  return unsafe_string(pointer(nodestringbuf))
+
+end
+
+"""
+  pixelformat!(::Camera, ::PIXELFORMAT)
+
+  Set camera pixel format.
+"""
+function pixelformat!(cam::Camera, fmt::PIXELFORMAT)
+
+   #_reinit(cam)
+
+   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+   spinCameraGetNodeMap(cam, hNodeMap)
+
+   hPixelFormat = Ref(spinNodeHandle(C_NULL))
+
+   # Get ADC bit depth, ensure it is writable
+   spinNodeMapGetNode(hNodeMap[], "PixelFormat", hPixelFormat);
+   @assert readable(hPixelFormat)
+
+   hPixelFormatVal = Ref(spinNodeHandle(C_NULL))
+   pixelFormat = Ref(Int64(0))
+
+   spinEnumerationGetEntryByName(hPixelFormat[], PIXELFORMAT_strings[fmt], hPixelFormatVal)
+   @assert readable(hPixelFormatVal)
+
+   spinEnumerationEntryGetIntValue(hPixelFormatVal[], pixelFormat)
+   @assert writable(hPixelFormat)
+   spinEnumerationSetIntValue(hPixelFormat[], pixelFormat[])
+
+   return fmt
+
+end
 
 
 

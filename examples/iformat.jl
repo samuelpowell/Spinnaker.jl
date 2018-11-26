@@ -7,10 +7,12 @@ using Spinnaker
 camlist = CameraList()
 cam = camlist[0]
 gammenset = gammaenable!(cam, false)
-@assert !gammaenset
+@assert !gammenset
 adcbits!(cam, Spinnaker.ADCBITS_Bit12)
 
-
+pixelformat(cam)
+pixelformat!(cam, Spinnaker.PIXELFORMAT_Mono12p)
+@assert pixelformat(cam) == "Mono12p"
 
 triggersource!(cam, "Software")
 triggermode!(cam, "On")
