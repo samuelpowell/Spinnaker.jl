@@ -3,6 +3,7 @@
 
 # Image.jl: an AbstractArray interface to Image object data
 import Base: size, getindex, setindex!, IndexStyle
+export ImageData
 
 const fmtmap = Dict(PixelFormat_Mono8 => UInt8,
                     PixelFormat_Mono10 => UInt16,
