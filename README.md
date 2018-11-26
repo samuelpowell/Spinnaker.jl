@@ -4,7 +4,7 @@ A Julia interface to the FLIR/PointGrey [Spinnaker SDK](https://www.ptgrey.com/s
 
 ## Overview
 
-The Spinnaker.jl provides a complete wrapper of the Spinnaker SDK C API. All
+This package provides a complete wrapper of the Spinnaker SDK C API. All
 functions and enumerations prefixed by `spin` are exported from the package and
 can be called according to the API documentation. See `examples/wrapper/` for
 examples.

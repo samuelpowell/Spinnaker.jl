@@ -17,9 +17,11 @@ struct ImageData{T,N} <: AbstractArray{T,N}
     function ImageData(image::Image)
         hpixfmt = Ref(spinPixelFormatEnums(0))
         spinImageGetPixelFormat(image, hpixfmt)
-        @info "Pixel format: $(hpixfmt[])"
-        @info "Choosing data type: $(fmtmap[hpixfmt[]])"
-        T = fmtmap[hpixfmt[]]
+        try
+            T = fmtmap[hpixfmt[]]
+        catch e
+            throw(e)
+        end
         @assert sizeof(T) * prod(size(image)) < _buffersize(image)
         rawptr = _bufferptr(image)
         typptr = Ptr{T}(rawptr)

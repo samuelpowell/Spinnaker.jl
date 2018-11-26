@@ -28,7 +28,10 @@ mutable struct Camera
   function Camera(handle)
     @assert spinsys.handle != C_NULL
     @assert handle != C_NULL
+    spinCameraDeInit(handle)
+    sleep(0.5)
     spinCameraInit(handle)
+    sleep(0.5)
     cam = new(handle)
     finalizer(_release!, cam)
     return cam

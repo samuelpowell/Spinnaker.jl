@@ -24,7 +24,9 @@ using .CEnum
 include("wrapper/spin_common.jl")
 
 function checkerror(err::spinError)
-  err == spinError(0) ||  @error "Spinnaker SDK error: $err"
+  if err != spinError(0)
+    throw(ErrorException("Spinnaker SDK error: $err"))
+  end
   return nothing
 end
 

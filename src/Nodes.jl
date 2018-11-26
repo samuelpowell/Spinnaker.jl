@@ -72,17 +72,23 @@ function IEnumNode!(cam::Camera,
    spinNodeMapGetNode(hNodeMap[], name, hNode);
 
    # Get enumeration entry
-   readable(hNode) || @error "Node $name is not readable"
+   if !readable(hNode)
+     throw(ErrorException("Node $name is not readable"))
+   end
    hNodeEntry = Ref(spinNodeHandle(C_NULL))
    hNodeVal = Ref(Int64(0))
    spinEnumerationGetEntryByName(hNode[], value, hNodeEntry)
 
    # Get integer value from string
-   readable(hNodeEntry) || @error "Enumeration $value is not readable"
+   if !readable(hNodeEntry)
+     throw(ErrorException("Node $name entry is not readable"))
+   end
    spinEnumerationEntryGetIntValue(hNodeEntry[], hNodeVal)
 
    # Set value
-   writable(hNode) || @error "Node $name is not writable"
+   if !writable(hNode)
+     throw(ErrorException("Node $name is not writable"))
+   end
    spinEnumerationSetIntValue(hNode[], hNodeVal[])
 
    # Readback
@@ -108,7 +114,9 @@ function IEnumNode(cam::Camera,
 
    hNode = Ref(spinNodeHandle(C_NULL))
    spinNodeMapGetNode(hNodeMap[], name, hNode);
-   readable(hNode) || @error "Node $name is not readable"
+   if !readable(hNode)
+     throw(ErrorException("Node $name is not readable"))
+   end
 
    hNodeEntry = Ref(spinNodeHandle(C_NULL))
    strbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
@@ -137,7 +145,9 @@ function IFloatNode!(cam::Camera,
   # Set manual exposure time
   hNode = Ref(spinNodeHandle(C_NULL))
   spinNodeMapGetNode(hNodeMap[], name, hNode);
-  readable(hNode) || @error "Node $name is not readable"
+  if !readable(hNode)
+    throw(ErrorException("Node $name is not readable"))
+  end
 
   hsetvalue = Ref(Float64(0.0))
   spinFloatGetValue(hNode[], hsetvalue)
@@ -162,7 +172,9 @@ function IFloatNodeRange(cam::Camera, name::String)
     hvalmax = Ref(Float64(0.0))
 
     spinNodeMapGetNode(hNodeMap[], name, hNode);
-    readable(hNode) || @error "Node $name is not readable"
+    if !readable(hNode)
+      throw(ErrorException("Node $name is not readable"))
+    end
     spinFloatGetMin(hNode[], hvalmin)
     spinFloatGetMax(hNode[], hvalmax)
 
@@ -193,7 +205,9 @@ function IFloatNode!(cam::Camera,
   spinNodeMapGetNode(hNodeMap[], name, hNode);
 
   # Clamp and set range
-  writable(hNode) || @error "Node $name is not writable"
+  if !writable(hNode)
+    throw(ErrorException("Node $name is not writable"))
+  end
   spinFloatSetValue(hNode[], Float64(clamp(value, IFloatNodeRange(cam, name)...)))
   spinFloatGetValue(hNode[], hsetvalue)
 
@@ -215,7 +229,9 @@ function IBooleanNode(cam::Camera, name::String)
   hNode = Ref(spinNodeHandle(C_NULL))
   hval = Ref(bool8_t(0))
   spinNodeMapGetNode(hNodeMap[], name, hNode);
-  readable(hNode) || @error "Node $name is not readable"
+  if !readable(hNode)
+    throw(ErrorException("Node $name is not readable"))
+  end
 
   # Get and return value
   spinBooleanGetValue(hNode[], hval)
@@ -238,7 +254,9 @@ function IBooleanNode(cam::Camera, name::String, value::Bool)
   hNode = Ref(spinNodeHandle(C_NULL))
   hval = Ref(bool8_t(0))
   spinNodeMapGetNode(hNodeMap[], name, hNode);
-  writable(hNode) || @error "Node $name is not writable"
+  if !writable(hNode)
+    throw(ErrorException("Node $name is not writable"))
+  end
 
   # Get and return value
   spinBooleanSetValue(hNode[], value)
