@@ -29,9 +29,7 @@ mutable struct Camera
     @assert spinsys.handle != C_NULL
     @assert handle != C_NULL
     spinCameraDeInit(handle)
-    sleep(0.5)
     spinCameraInit(handle)
-    sleep(0.5)
     cam = new(handle)
     finalizer(_release!, cam)
     return cam
@@ -49,9 +47,11 @@ end
 
 # Release handle to system
 function _release!(cam::Camera)
-  spinCameraDeInit(cam)
-  spinCameraRelease(cam)
-  cam.handle = C_NULL
+  if cam.handle != C_NULL
+    spinCameraDeInit(cam)
+    spinCameraRelease(cam)
+    cam.handle = C_NULL
+  end
   return nothing
 end
 

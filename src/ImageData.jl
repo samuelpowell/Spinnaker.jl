@@ -17,6 +17,7 @@ struct ImageData{T,N} <: AbstractArray{T,N}
     function ImageData(image::Image)
         hpixfmt = Ref(spinPixelFormatEnums(0))
         spinImageGetPixelFormat(image, hpixfmt)
+        T = UInt8
         try
             T = fmtmap[hpixfmt[]]
         catch e
