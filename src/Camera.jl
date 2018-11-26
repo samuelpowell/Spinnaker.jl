@@ -153,6 +153,26 @@ function getimage(cam::Camera)
 end
 
 
+"""
+  getimage!(::Camera, ::Image) -> Image
+
+  Copy the next image from the specified camera, blocking until available, overwriting existing.
+"""
+function getimage(cam::Camera, image::Image)
+
+  # Get image handle and check it's complete
+  himage_ref = Ref(spinImage(C_NULL))
+  spinCameraGetNextImage(cam, himage_ref);
+  @assert _isimagecomplete(himage_ref)
+
+  # Create output image, copy and release buffer
+  spinImageDeepCopy(himage_ref[], image)
+  spinImageRelease(himage_ref[])
+
+  return image
+
+end
+
 
 """
     saveimage(fn::AbstractString, ::Image, ::spinImageFileFormat)
