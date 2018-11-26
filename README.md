@@ -109,13 +109,16 @@ To copy the image from the camera buffer, and release the buffer for acquisition
 image = getimage(cam, Spinnaker.PixelFormat_Mono8)
 ```
 
-The resulting `image` is an opaque handle to a Spinnaker image format. These
-types can queried and saved to disc (see `src/Image.jl` for details). If the
-image format is unpacked (that is to say that it fits a standard integer format)
-the image data can be viewed as a Julia array:
+The resulting `image` is an opaque handle to a Spinnaker image object. These
+types can queried for metadata, converted to alternative pixel formats, saved to
+disc, etc., by the Spinnaker SDK (see `src/Image.jl` for details). Raw access
+to the underlying image data is also available. If the image format is unpacked
+(that is to say that it fits a standard integer format) a view to the image
+data can be provided through an AbstractArray interface:
 
 ```julia
-imarr = Array(image)
+imarr = ImageData(image)
+imraw = deepcopy(imarr)
 ```
 
 Alternatively one may directly save the image to disc:
