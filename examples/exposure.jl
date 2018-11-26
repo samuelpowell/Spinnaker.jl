@@ -8,7 +8,8 @@ camlist = CameraList()
 cam = camlist[0]
 triggersource!(cam, "Software")
 triggermode!(cam, "On")
-gain!(cam, 12)
+gain!(cam, 0)
+acquisitionmode!(cam, "Continuous")
 start!(cam)
 for expval in 0:1e5:2e6
     expact = exposure!(cam, expval)
