@@ -3,6 +3,7 @@
 
 # Image.jl: an AbstractArray interface to Image object data
 import Base: size, getindex, setindex!, IndexStyle
+export ImageData
 
 const fmtmap = Dict(PixelFormat_Mono8 => UInt8,
                     PixelFormat_Mono10 => UInt16,
@@ -17,6 +18,7 @@ struct ImageData{T,N} <: AbstractArray{T,N}
     function ImageData(image::Image)
         hpixfmt = Ref(spinPixelFormatEnums(0))
         spinImageGetPixelFormat(image, hpixfmt)
+        T = UInt8
         try
             T = fmtmap[hpixfmt[]]
         catch e

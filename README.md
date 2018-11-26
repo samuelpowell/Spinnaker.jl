@@ -107,6 +107,7 @@ To copy the image from the camera buffer, and release the buffer for acquisition
 
 ```julia
 julia> image = getimage(cam)
+Spinnaker Image, (1440, 1080), 16bpp, PixelFormat_Mono16(1)
 ```
 
 The resulting `image` is an opaque handle to a Spinnaker image object. These
@@ -118,9 +119,8 @@ data can be provided through an AbstractArray interface:
 
 ```julia
 julia> imarr = ImageData(image)
-Spinnaker Image, (1440, 1080), 16bpp, PixelFormat_Mono16(1)
-
-julia> imraw = deepcopy(imarr)
+1440×1080 ImageData{UInt16,2}:
+ 0x0550  0x0620  0x04d0  0x0510  0x0420  0x0560  …  0x0b80  0x0ba0  0x0c40  0x09e0  0x0d10
 ```
 
 Alternatively one may directly save the image to disc:
