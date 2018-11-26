@@ -10,7 +10,8 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
        gain!,
        adcbits, adcbits!,
        gammaenable!,
-       pixelformat, pixelformat!
+       pixelformat, pixelformat!,
+       acqusitionmode, acquisitionmode!
 
 """
  Spinnaker SDK Camera object
@@ -610,6 +611,72 @@ end
 ###
 ### Image acquistion
 ###
+
+
+@enum ACQMODE ACQMODE_Continuous ACQMODE_SingleFrame ACQMODE_MultiFrame
+const ACQMODE_strings = Dict(ACQMODE_Continuous=>"Continuous",
+                             ACQMODE_SingleFrame=>"SingleFrame",
+                             ACQMODE_MultiFrame=>"MultiFrame")
+
+"""
+  acquisitionmode(::Camera)
+
+  Return camera acquistion mode.
+"""
+function acquisitionmode(cam::Camera)
+
+  #_reinit(cam)
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hAcquistionMode = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], "AcquisitionMode", hAcquistionMode);
+  @assert readable(hAcquistionMode)
+
+  hAcquistionModeEnum = Ref(spinNodeHandle(C_NULL))
+  nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
+  nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
+
+  spinEnumerationGetCurrentEntry(hAcquistionMode[], hAcquistionModeEnum)
+  spinEnumerationEntryGetSymbolic(hAcquistionModeEnum[], nodestringbuf, nodestringlen)
+
+  return unsafe_string(pointer(nodestringbuf))
+
+end
+
+"""
+  acquisitionmode!(::Camera, ::ACQMODE)
+
+  Set camera acquistion mode.
+"""
+function acquisitionmode!(cam::Camera, mode::ACQMODE)
+
+   #_reinit(cam)
+
+   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+   spinCameraGetNodeMap(cam, hNodeMap)
+
+   hAcquistionMode = Ref(spinNodeHandle(C_NULL))
+
+   # Get ADC bit depth, ensure it is writable
+   spinNodeMapGetNode(hNodeMap[], "AcquisitionMode", hAcquistionMode);
+   @assert readable(hAcquistionMode)
+
+   hAcquistionModeVal = Ref(spinNodeHandle(C_NULL))
+   acquistionMode = Ref(Int64(0))
+
+   spinEnumerationGetEntryByName(hAcquistionMode[], ACQMODE_strings[mode], hAcquistionModeVal)
+   @assert readable(hAcquistionModeVal)
+
+   spinEnumerationEntryGetIntValue(hAcquistionModeVal[], acquistionMode)
+   @assert writable(hAcquistionMode)
+   spinEnumerationSetIntValue(hAcquistionMode[], acquistionMode[])
+
+   return mode
+
+end
+
 
 
 
