@@ -67,6 +67,13 @@ julia> exposure!(cam, 0.1e6)
 100001.0
 ```
 
+Change the framerate for continuous mode to 60 fps:
+
+```julia
+julia> framerate!(cam, 60)
+60.0
+```
+
 Start an acquisition, and trigger it (if set to trigger mode):
 
 ```julia
