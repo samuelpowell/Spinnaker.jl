@@ -2,7 +2,7 @@
 # Copyright (C) 2018 Samuel Powell
 
 # Camera.jl: interface to Camera objects
-export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
+export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, saveimage,
        triggermode, triggermode!,
        triggersource, triggersource!,
        trigger!,
@@ -136,7 +136,7 @@ end
 
   Copy the next image from the specified camera, blocking until available.
 """
-getimage(cam::Camera) = getimage(cam, Image())
+getimage(cam::Camera) = getimage!(cam, Image())
 
 
 """
@@ -225,13 +225,16 @@ function _copyimage!(himage_ref, width, height, image::AbstractArray{T,2}, norma
     end
   end
 
+
   # Make sure this is a good idea
-  @assert (sizeof(Ti)*width*height) <= _buffersize(himage_ref[])
+  sz = Ref(Csize_t(0))
+  spinImageGetBufferSize(himage_ref[], sz)
+  @assert (sizeof(Ti)*width*height) <= sz[]
 
   # Wrap the image data in an array of the correct pointer type
   rawptr = Ref(Ptr{Cvoid}(0))
   spinImageGetData(himage_ref[], rawptr)
-  data = unsafe_wrap(Array,  Ptr{Ti}(rawptr), (width, height));
+  data = unsafe_wrap(Array,  Ptr{Ti}(rawptr[]), (width, height));
   
   # Convert and copy data from buffer
   image .= T.(data)

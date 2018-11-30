@@ -3,6 +3,8 @@
 
 module Spinnaker
 
+using FixedPointNumbers
+
 import Libdl
 import Base: unsafe_convert, show, length, getindex, size, convert
 
