@@ -47,7 +47,7 @@ function CameraImage(spinim::SpinImage, ::Type{T}; normalize=false) where T
     width, height = size(spinim)
     imdat = Array{T,2}(undef, width, height)
     _copyimage!(spinim.handle, width, height, imdat, normalize)
-    return CameraImage(data, id(spinim), timestamp(spinim))
+    return CameraImage(imdat, id(spinim), timestamp(spinim))
 end
 
 function _copyimage!(himage_ref::spinImage,
@@ -58,7 +58,7 @@ function _copyimage!(himage_ref::spinImage,
  
     @assert prod(size(image)) == width*height
     hpixfmt = Ref(spinPixelFormatEnums(0))
-    spinImageGetPixelFormat(himage_ref[], hpixfmt)   
+    spinImageGetPixelFormat(himage_ref, hpixfmt)   
     
     # Map the pixel format to a native integer format. For un-normalized output this is 
     # just an unsigned integer of the correct size. For a normalized output a number type
