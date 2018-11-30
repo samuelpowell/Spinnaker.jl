@@ -7,6 +7,7 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        triggersource, triggersource!,
        trigger!,
        exposure!,
+       framerate!,
        gain!,
        adcbits, adcbits!,
        gammaenable!,
