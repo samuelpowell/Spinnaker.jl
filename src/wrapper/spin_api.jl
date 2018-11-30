@@ -293,10 +293,6 @@ function spinCameraDeInit(hCamera)
     checkerror(ccall((:spinCameraDeInit, libSpinnaker_C), spinError, (spinCamera,), hCamera))
 end
 
-function spinCameraGetID(hCamera, id)
-    checkerror(ccall((:spinCameraGetID, libSpinnaker_C), spinError, (spinCamera, Ptr{Cvoid}), hCamera, id))
-end
-
 function spinCameraGetNodeMap(hCamera, phNodeMap)
     checkerror(ccall((:spinCameraGetNodeMap, libSpinnaker_C), spinError, (spinCamera, Ptr{spinNodeMapHandle}), hCamera, phNodeMap))
 end
