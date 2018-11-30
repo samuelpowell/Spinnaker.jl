@@ -34,6 +34,9 @@ getindex(a::CameraImage, i::Int) = a.data[i]
 setindex!(a::CameraImage, v, i::Int) = (a.data[i] = v)
 IndexStyle(::Type{<:CameraImage}) = IndexLinear()
 
+id(image::CameraImage) = image.id
+timestamp(image::CameraImage) = image.timestamp
+
 """
     CameraImage(::SpinImage, ::Type{T}, normalize=false)
 
