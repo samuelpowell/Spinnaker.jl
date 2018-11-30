@@ -50,7 +50,7 @@ function CameraImage(spinim::SpinImage, ::Type{T}; normalize=false) where T
     return CameraImage(data, id(spinim), timestamp(spinim))
 end
 
-function _copyimage!(himage_ref::Ref{Ptr{spinImage}},
+function _copyimage!(himage_ref::spinImage,
                      width::Integer,
                      height::Integer,
                      image::AbstractArray{T,2},
@@ -68,14 +68,14 @@ function _copyimage!(himage_ref::Ref{Ptr{spinImage}},
       try
         Ti = nrm_fmtmap[hpixfmt[]]
       catch e
-        spinImageRelease(himage_ref[])
+        spinImageRelease(himage_ref)
         throw(e)
       end
     else
       try
         Ti = raw_fmtmap[hpixfmt[]]
       catch e
-        spinImageRelease(himage_ref[])
+        spinImageRelease(himage_ref)
         throw(e)
       end
     end
@@ -83,12 +83,12 @@ function _copyimage!(himage_ref::Ref{Ptr{spinImage}},
   
     # Make sure this is a good idea
     sz = Ref(Csize_t(0))
-    spinImageGetBufferSize(himage_ref[], sz)
+    spinImageGetBufferSize(himage_ref, sz)
     @assert (sizeof(Ti)*width*height) <= sz[]
   
     # Wrap the image data in an array of the correct pointer type
     rawptr = Ref(Ptr{Cvoid}(0))
-    spinImageGetData(himage_ref[], rawptr)
+    spinImageGetData(himage_ref, rawptr)
     data = unsafe_wrap(Array,  Ptr{Ti}(rawptr[]), (width, height));
     
     # Convert and copy data from buffer

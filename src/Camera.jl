@@ -178,13 +178,13 @@ function _pullim(cam::Camera)
     spinImageGetWidth(himage_ref[], width)
     spinImageGetHeight(himage_ref[], height)
     spinImageGetID(himage_ref[], id)
-    spinImageGetTimeStamp(himage_ref[], id)
+    spinImageGetTimeStamp(himage_ref[], timestamp)
     return himage_ref, Int(width[]), Int(height[]), id[], timestamp[]
 
 end
 
 """
-  getimage(::Camera, ::Type{T}; normalize=false) -> Array{T,2}, timestamp, id
+  getimage(::Camera, ::Type{T}; normalize=false) -> CameraImage
 
   Copy the next iamge from the specified camera, converting the image data to the specified array
   format, blocking until available.
@@ -203,19 +203,20 @@ end
 function getimage(cam::Camera, ::Type{T}; normalize=true) where T
 
   himage_ref, width, height, id, timestamp = _pullim(cam)
-  image = Array{T,2}(undef, (width,height))
-  _copyimage!(himage_ref, width, height, image, normalize)
+  imdat = Array{T,2}(undef, (width,height))
+  camim = CameraImage(imdat, id, timestamp)
+  _copyimage!(himage_ref[], width, height, camim, normalize)
   spinImageRelease(himage_ref[])
-  return image, timestamp, id
+  return camim
 
 end
 
 
 """
-  getimage!(::Camera, ::Array{T,2}; normalize=false) -> Array{T,2}, timestamp, id
+  getimage!(::Camera, ::CameraImage{T,2}; normalize=false) 
 
   Copy the next iamge from the specified camera, converting to the format of, and overwriting the 
-  provided array.
+  provided CamerImage.
   
   If `normalize == false`, the input data from the camera is interpreted as a number in the range of
   the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
@@ -226,12 +227,38 @@ end
   To return images compatible with Images.jl, one can request a Gray value, e.g.,
   `getimage!(cam, Gray{N0f8}, normalize=true)`. 
 """
-function getimage!(cam::Camera, image::AbstractArray{T,2}; normalize=true) where T
+function getimage!(cam::Camera, image::CameraImage{T,2}; normalize=true) where T
   
   himage_ref, width, height, id, timestamp = _pullim(cam)
-  _copyimage!(himage_ref, width, height, image, normalize)
+  camim = CameraImage(image.data, id, timestamp)
+  _copyimage!(himage_ref[], width, height, camim, normalize)
   spinImageRelease(himage_ref[])
-  return image, timestamp, id
+  return camim
+
+end
+
+
+"""
+  getimage!(::Camera, ::AbstractArray{T,2}; normalize=false)
+
+  Copy the next iamge from the specified camera, converting to the format of, and overwriting the 
+  provided CamerImage.
+  
+  If `normalize == false`, the input data from the camera is interpreted as a number in the range of
+  the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
+  `getimage!(cam, Float64, normalize=false)` will return an array of dobule precision numbers in
+  the range [0, 255]. `If normalize == true` the input data is interpreted as an associated fixed point
+  format, and thus the array will be in the range [0,1].
+
+  To return images compatible with Images.jl, one can request a Gray value, e.g.,
+  `getimage!(cam, Gray{N0f8}, normalize=true)`. 
+"""
+function getimage!(cam::Camera, image::Array{T,2}; normalize=true) where T
+  
+  himage_ref, width, height, id, timestamp = _pullim(cam)
+  _copyimage!(himage_ref[], width, height, image, normalize)
+  spinImageRelease(himage_ref[])
+  return image
 
 end
 
