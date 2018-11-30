@@ -67,6 +67,13 @@ julia> exposure!(cam, 0.1e6)
 100001.0
 ```
 
+Change the framerate for continuous mode to 60 fps:
+
+```julia
+julia> framerate!(cam, 60)
+60.0
+```
+
 Start an acquisition, and trigger it (if set to trigger mode):
 
 ```julia
@@ -127,6 +134,13 @@ Alternatively one may directly save the image to disc:
 
 ```julia
 saveimage(cam, "output.png", Spinnaker.PNG)
+```
+
+Further, the timestamp of the image in nanoseconds since the last reset of the camera clock (i.e. at camera boot) may be read:
+
+```julia
+timestamp(image)
+2166531583413
 ```
 
 ### Demo

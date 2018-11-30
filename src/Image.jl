@@ -2,7 +2,7 @@
 # Copyright (C) 2018 Samuel Powell
 
 # Image.jl: interface to Image objects
-export Image, bpp, offset, padding, save
+export Image, bpp, id, offset, padding, save, timestamp
 
 """
  Spinnaker SDK Image object
@@ -119,6 +119,28 @@ function size(image::Image)
     spinImageGetWidth(image, width)
     spinImageGetHeight(image, height)
     return (Int(width[]), Int(height[]))
+end
+
+"""
+    timestamp(::Image) -> Int64
+
+    Return image timestamp in nanoseconds since the last timeclock reset (i.e. at camera boot).
+"""
+function timestamp(image::Image)
+    timestamp_ref = Ref(Csize_t(0))
+    spinImageGetTimeStamp(image, timestamp_ref);
+    return Int64(timestamp_ref[])
+end
+
+"""
+    id(::Image) -> Int64
+
+    Return image id, as assigned by camera.
+"""
+function id(image::Image)
+    id_ref = Ref(Csize_t(0))
+    spinImageGetID(image, id_ref);
+    return Int64(id_ref[])
 end
 
 """

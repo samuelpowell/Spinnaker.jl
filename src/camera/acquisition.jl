@@ -111,3 +111,15 @@ function exposure!(cam::Camera, t)
   IEnumNode!(cam, "ExposureAuto", "Off")
   IFloatNode!(cam, "ExposureTime", t)
 end
+
+
+"""
+  framerate!(::Camera, ::Number) -> Float
+
+  Set framerate on camera to specified number of frames per second. The requested
+  value is clamped to range supported by the camera, and the actual set value
+  is returned.
+"""
+function framerate!(cam::Camera, fps)
+  IFloatNode!(cam, "AcquisitionFrameRate", fps)
+end
