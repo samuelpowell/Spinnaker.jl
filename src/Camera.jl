@@ -159,10 +159,8 @@ function getimage!(cam::Camera, image::SpinImage)
   return image
 
 end
-
-
                      
-function _getim(cam::Camera)
+function _pullim(cam::Camera)
 
     # Get image handle and check it's complete
     himage_ref = Ref(spinImage(C_NULL))
@@ -185,8 +183,6 @@ function _getim(cam::Camera)
 
 end
 
-
-
 """
   getimage(::Camera, ::Type{T}; normalize=false) -> Array{T,2}, timestamp, id
 
@@ -206,7 +202,7 @@ end
 """
 function getimage(cam::Camera, ::Type{T}; normalize=true) where T
 
-  himage_ref, width, height, id, timestamp = _getim(cam)
+  himage_ref, width, height, id, timestamp = _pullim(cam)
   image = Array{T,2}(undef, (width,height))
   _copyimage!(himage_ref, width, height, image, normalize)
   spinImageRelease(himage_ref[])
@@ -232,14 +228,12 @@ end
 """
 function getimage!(cam::Camera, image::AbstractArray{T,2}; normalize=true) where T
   
-  himage_ref, width, height, id, timestamp = _getim(cam)
+  himage_ref, width, height, id, timestamp = _pullim(cam)
   _copyimage!(himage_ref, width, height, image, normalize)
   spinImageRelease(himage_ref[])
   return image, timestamp, id
 
 end
-
-
 
 """
     saveimage()::Camera, fn::AbstractString, ::spinImageFileFormat)
