@@ -161,22 +161,8 @@ function getimage!(cam::Camera, image::SpinImage)
 end
 
 
-const raw_fmtmap = Dict(PixelFormat_Mono8  => UInt8,
-                        PixelFormat_Mono10 => UInt16,
-                        PixelFormat_Mono12 => UInt16,
-                        PixelFormat_Mono14 => UInt16,
-                        PixelFormat_Mono16 => UInt16)
-
-const nrm_fmtmap =  Dict(PixelFormat_Mono8  => N0f8,
-                         PixelFormat_Mono10 => N6f10,
-                         PixelFormat_Mono12 => N4f12,
-                         PixelFormat_Mono14 => N2f14,
-                         PixelFormat_Mono16 => N0f16)
-
-
                      
 function _getim(cam::Camera)
-
 
     # Get image handle and check it's complete
     himage_ref = Ref(spinImage(C_NULL))
@@ -199,49 +185,6 @@ function _getim(cam::Camera)
 
 end
 
-
-function _copyimage!(himage_ref, width, height, image::AbstractArray{T,2}, normalize) where T
- 
-  @assert prod(size(image)) == width*height
-  hpixfmt = Ref(spinPixelFormatEnums(0))
-  spinImageGetPixelFormat(himage_ref[], hpixfmt)   
-  
-  # Map the pixel format to a native integer format. For un-normalized output this is 
-  # just an unsigned integer of the correct size. For a normalized output a number type
-  # from FixedPointNumbers is used to maintain normalisation.
-  Ti = UInt8
-  if(normalize)
-    try
-      Ti = nrm_fmtmap[hpixfmt[]]
-    catch e
-      spinImageRelease(himage_ref[])
-      throw(e)
-    end
-  else
-    try
-      Ti = raw_fmtmap[hpixfmt[]]
-    catch e
-      spinImageRelease(himage_ref[])
-      throw(e)
-    end
-  end
-
-
-  # Make sure this is a good idea
-  sz = Ref(Csize_t(0))
-  spinImageGetBufferSize(himage_ref[], sz)
-  @assert (sizeof(Ti)*width*height) <= sz[]
-
-  # Wrap the image data in an array of the correct pointer type
-  rawptr = Ref(Ptr{Cvoid}(0))
-  spinImageGetData(himage_ref[], rawptr)
-  data = unsafe_wrap(Array,  Ptr{Ti}(rawptr[]), (width, height));
-  
-  # Convert and copy data from buffer
-  image .= T.(data)
-  return image
-
-end
 
 
 """

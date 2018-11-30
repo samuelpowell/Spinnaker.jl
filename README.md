@@ -119,8 +119,14 @@ Spinnaker Image, (1440, 1080), 16bpp, PixelFormat_Mono16(1)
 
 The resulting `SpinImage` type contains a handle to a Spinnaker image object. These
 types can queried for metadata, converted to alternative pixel formats, saved to
-disc, etc., by the Spinnaker SDK (see `src/SpinImage.jl` for details). If you have
-an existing `SpinImage` and wish to overwrite it in-place,
+disc, etc., by the Spinnaker SDK (see `src/SpinImage.jl` for details). For example, the timestamp of the image in nanoseconds since the last reset of the camera clock (i.e. at camera boot) may be read:
+
+```julia
+timestamp(image)
+2166531583413
+```
+
+If you havean existing `SpinImage` and wish to overwrite it in-place,
 
 ```julia
 julia> getimage!(cam, image)
@@ -132,8 +138,6 @@ Alternatively, images can be retrieved to a `CameraImage` type which provides an
 available when the image is acquired. If the pixel format from the camera is 
 _unpacked_ one can directly acquire an image from the camera by specifying the
 desired data format:
-
-TODO:
 
 ```julia
 julia> getimage(cam, Gray{N0f8}, normalize=true)
@@ -152,20 +156,19 @@ julia> getimage!(cam, Array{Float64}(undef, width, height))
 ```
 
 It is possible to convert a `SpinImage` to a `CameraImage` using the `CameraImage`
-constructor. 
+constructor:
 
-Alternatively one may directly save the image to disc:
+```
+julia> CameraImage(spinimage, Float64, normalize=true)
+```
+
+One may directly save an acquired image to disc:
 
 ```julia
 saveimage(cam, "output.png", Spinnaker.PNG)
 ```
 
-Further, the timestamp of the image in nanoseconds since the last reset of the camera clock (i.e. at camera boot) may be read:
 
-```julia
-timestamp(image)
-2166531583413
-```
 
 ### Demo
 
