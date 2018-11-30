@@ -136,6 +136,13 @@ Alternatively one may directly save the image to disc:
 saveimage(cam, "output.png", Spinnaker.PNG)
 ```
 
+Further, the timestamp of the image in nanoseconds since the last reset of the camera clock (i.e. at camera boot) may be read:
+
+```julia
+timestamp(image)
+2166531583413
+```
+
 ### Demo
 
 ```julia
