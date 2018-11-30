@@ -2,7 +2,7 @@
 # Copyright (C) 2018 Samuel Powell
 
 # Camera.jl: interface to Camera objects
-export serial, model, vendor, isrunning, start!, stop!, getimage, saveimage,
+export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, saveimage,
        triggermode, triggermode!,
        triggersource, triggersource!,
        trigger!,
@@ -137,7 +137,15 @@ end
 
   Copy the next image from the specified camera, blocking until available.
 """
-function getimage(cam::Camera)
+getimage(cam::Camera) = getimage!(cam, SpinImage())
+
+
+"""
+  getimage!(::Camera, ::Image) -> Image
+
+  Copy the next image from the specified camera, blocking until available, overwriting existing.
+"""
+function getimage!(cam::Camera, image::SpinImage)
 
   # Get image handle and check it's complete
   himage_ref = Ref(spinImage(C_NULL))
@@ -145,18 +153,117 @@ function getimage(cam::Camera)
   @assert _isimagecomplete(himage_ref)
 
   # Create output image, copy and release buffer
-  image = Image()
   spinImageDeepCopy(himage_ref[], image)
   spinImageRelease(himage_ref[])
 
   return image
 
 end
+                     
+function _pullim(cam::Camera)
 
+    # Get image handle and check it's complete
+    himage_ref = Ref(spinImage(C_NULL))
+    spinCameraGetNextImage(cam, himage_ref);
+    if !_isimagecomplete(himage_ref)
+      spinImageRelease(himage_ref[])
+      throw(ErrorException("Image not complete"))
+    end
+
+    # Get image dimensions, ID and timestamp
+    width = Ref(Csize_t(0))
+    height = Ref(Csize_t(0))
+    id = Ref(UInt64(0))
+    timestamp = Ref(UInt64(0))
+    spinImageGetWidth(himage_ref[], width)
+    spinImageGetHeight(himage_ref[], height)
+    spinImageGetID(himage_ref[], id)
+    spinImageGetTimeStamp(himage_ref[], timestamp)
+    return himage_ref, Int(width[]), Int(height[]), id[], timestamp[]
+
+end
+
+"""
+  getimage(::Camera, ::Type{T}; normalize=false) -> CameraImage
+
+  Copy the next iamge from the specified camera, converting the image data to the specified array
+  format, blocking until available.
+
+  If `normalize == false`, the input data from the camera is interpreted as a number in the range of
+  the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
+  `getimage!(cam, Float64, normalize=false)` will return an array of dobule precision numbers in
+  the range [0, 255]. `If normalize == true` the input data is interpreted as an associated fixed point
+  format, and thus the array will be in the range [0,1].
+
+  To return images compatible with Images.jl, one can request a Gray value, e.g.,
+  `getimage!(cam, Gray{N0f8}, normalize=true)`. 
+
+  Function also returns image ID and timestamp metadata.
+"""
+function getimage(cam::Camera, ::Type{T}; normalize=true) where T
+
+  himage_ref, width, height, id, timestamp = _pullim(cam)
+  imdat = Array{T,2}(undef, (width,height))
+  camim = CameraImage(imdat, id, timestamp)
+  _copyimage!(himage_ref[], width, height, camim, normalize)
+  spinImageRelease(himage_ref[])
+  return camim
+
+end
 
 
 """
-    saveimage(fn::AbstractString, ::Image, ::spinImageFileFormat)
+  getimage!(::Camera, ::CameraImage{T,2}; normalize=false) 
+
+  Copy the next iamge from the specified camera, converting to the format of, and overwriting the 
+  provided CamerImage.
+  
+  If `normalize == false`, the input data from the camera is interpreted as a number in the range of
+  the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
+  `getimage!(cam, Float64, normalize=false)` will return an array of dobule precision numbers in
+  the range [0, 255]. `If normalize == true` the input data is interpreted as an associated fixed point
+  format, and thus the array will be in the range [0,1].
+
+  To return images compatible with Images.jl, one can request a Gray value, e.g.,
+  `getimage!(cam, Gray{N0f8}, normalize=true)`. 
+"""
+function getimage!(cam::Camera, image::CameraImage{T,2}; normalize=true) where T
+  
+  himage_ref, width, height, id, timestamp = _pullim(cam)
+  camim = CameraImage(image.data, id, timestamp)
+  _copyimage!(himage_ref[], width, height, camim, normalize)
+  spinImageRelease(himage_ref[])
+  return camim
+
+end
+
+
+"""
+  getimage!(::Camera, ::AbstractArray{T,2}; normalize=false)
+
+  Copy the next iamge from the specified camera, converting to the format of, and overwriting the 
+  provided CamerImage.
+  
+  If `normalize == false`, the input data from the camera is interpreted as a number in the range of
+  the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
+  `getimage!(cam, Float64, normalize=false)` will return an array of dobule precision numbers in
+  the range [0, 255]. `If normalize == true` the input data is interpreted as an associated fixed point
+  format, and thus the array will be in the range [0,1].
+
+  To return images compatible with Images.jl, one can request a Gray value, e.g.,
+  `getimage!(cam, Gray{N0f8}, normalize=true)`. 
+"""
+function getimage!(cam::Camera, image::Array{T,2}; normalize=true) where T
+  
+  himage_ref, width, height, id, timestamp = _pullim(cam)
+  _copyimage!(himage_ref[], width, height, image, normalize)
+  spinImageRelease(himage_ref[])
+  return image
+
+end
+
+"""
+    saveimage()::Camera, fn::AbstractString, ::spinImageFileFormat)
 
     Save the next image from the specified camera to file `fn`, blocking until
     available.

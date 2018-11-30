@@ -3,6 +3,8 @@
 
 module Spinnaker
 
+using FixedPointNumbers
+
 import Libdl
 import Base: unsafe_convert, show, length, getindex, size, convert
 
@@ -40,8 +42,8 @@ foreach(names(@__MODULE__, all=true)) do s
 end
 
 # Include interface
-include("Image.jl")
-include("ImageData.jl")
+include("SpinImage.jl")
+include("CameraImage.jl")
 include("System.jl")
 include("Camera.jl")
 include("CameraList.jl")
