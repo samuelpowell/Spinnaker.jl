@@ -137,7 +137,7 @@ end
 
   Copy the next image from the specified camera, blocking until available.
 """
-getimage(cam::Camera) = getimage!(cam, Image())
+getimage(cam::Camera) = getimage!(cam, SpinImage())
 
 
 """
@@ -145,7 +145,7 @@ getimage(cam::Camera) = getimage!(cam, Image())
 
   Copy the next image from the specified camera, blocking until available, overwriting existing.
 """
-function getimage!(cam::Camera, image::Image)
+function getimage!(cam::Camera, image::SpinImage)
 
   # Get image handle and check it's complete
   himage_ref = Ref(spinImage(C_NULL))
@@ -299,7 +299,7 @@ end
 
 
 """
-    saveimage(fn::AbstractString, ::Image, ::spinImageFileFormat)
+    saveimage()::Camera, fn::AbstractString, ::spinImageFileFormat)
 
     Save the next image from the specified camera to file `fn`, blocking until
     available.

@@ -42,7 +42,7 @@ foreach(names(@__MODULE__, all=true)) do s
 end
 
 # Include interface
-include("Image.jl")
+include("SpinImage.jl")
 include("ImageData.jl")
 include("System.jl")
 include("Camera.jl")
