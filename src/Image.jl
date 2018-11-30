@@ -127,9 +127,9 @@ end
     Return image timestamp in nanoseconds since the last timeclock reset (i.e. at camera boot).
 """
 function timestamp(image::Image)
-    timestamp_ref = Ref(Csize_t(0))
+    timestamp_ref = Ref(UInt64(0))
     spinImageGetTimeStamp(image, timestamp_ref);
-    return Int64(timestamp_ref[])
+    return timestamp_ref[]
 end
 
 """
@@ -138,9 +138,9 @@ end
     Return image id, as assigned by camera.
 """
 function id(image::Image)
-    id_ref = Ref(Csize_t(0))
+    id_ref = Ref(UInt64(0))
     spinImageGetID(image, id_ref);
-    return Int64(id_ref[])
+    return id_ref[]
 end
 
 """
