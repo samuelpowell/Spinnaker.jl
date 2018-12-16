@@ -110,38 +110,69 @@ See `gammaenable(!)`, `pixelformat(!)`, `adcbits(!)`
 All of the following functions are blocking, and execution will halt until an
 image is available.
 
-To copy the image from the camera buffer, and release the buffer for acquisition:
+If the pixel format from the camera is _unpacked_ Images can be retrieved to a `CameraImage` type which provides an `AbstractArray` interface to the underlying data, in addition to storing metadata available when the image is acquired. One can acquire an image
+in this way by specifying the desired data format:
+
+```julia
+julia> getimage(cam, Gray{N0f8}, normalize=true);
+julia> getimage(cam, Float64, normalize=false)
+1440×1080 CameraImage{Float64,2}:
+ 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0
+```
+
+By specifying `normalize=true` the image data from the camera is intepreted as a
+fixed point number in the range [0,1]. By combining this with a fixed point Colorant type `Gray{N0f8}`, this provides direct compatibilty with the Julia images stack. Alterantively, without normalisation the unsigned integer data returned from the camera will be supplied in its natural range, e.g., a Mono8 pixel format will result in values in the range [0, 255].
+
+Mutating versions are available, where the type is determined from the input.
+If the input type is a `CameraImage` the metadata will be updated and the underlying data array reused. Alternatively if this is a raw Julia array, only the
+data will be updated:
+
+```julia
+julia> getimage!(cam, cameraimage);
+julia> getimage!(cam, Array{Float64}(undef, width, height))
+1440×1080 Array{Float32,2}:
+ 99.0  93.0  90.0  91.0  84.0  92.0   92.0  99.0  …  84.0  79.0  85.0  81.0  82.0  
+```
+
+Alternatively, a `SpinImage` type can be retrieved from the camera, which supports all
+possible pixel formats, including packed data. To copy the image from the camera buffer, and release the buffer for acquisition:
 
 ```julia
 julia> image = getimage(cam)
 Spinnaker Image, (1440, 1080), 16bpp, PixelFormat_Mono16(1)
 ```
 
-The resulting `image` is an opaque handle to a Spinnaker image object. These
+The resulting `SpinImage` type contains a handle to a Spinnaker image object. These
 types can queried for metadata, converted to alternative pixel formats, saved to
-disc, etc., by the Spinnaker SDK (see `src/Image.jl` for details). Raw access
-to the underlying image data is also available. If the image format is unpacked
-(that is to say that it fits a standard integer format) a view to the image
-data can be provided through an AbstractArray interface:
-
-```julia
-julia> imarr = ImageData(image)
-1440×1080 ImageData{UInt16,2}:
- 0x0550  0x0620  0x04d0  0x0510  0x0420  0x0560  …  0x0b80  0x0ba0  0x0c40  0x09e0  0x0d10
-```
-
-Alternatively one may directly save the image to disc:
-
-```julia
-saveimage(cam, "output.png", Spinnaker.PNG)
-```
-
-Further, the timestamp of the image in nanoseconds since the last reset of the camera clock (i.e. at camera boot) may be read:
+disc, etc., by the Spinnaker SDK (see `src/SpinImage.jl` for details). For example, the timestamp of the image in nanoseconds since the last reset of the camera clock (i.e. at camera boot) may be read:
 
 ```julia
 timestamp(image)
 2166531583413
 ```
+
+If you havean existing `SpinImage` and wish to overwrite it in-place,
+
+```julia
+julia> getimage!(cam, image)
+Spinnaker Image, (1440, 1080), 16bpp, PixelFormat_Mono16(1)
+```
+
+Alternatively,
+It is possible to convert a `SpinImage` to a `CameraImage` using the `CameraImage`
+constructor:
+
+```
+julia> CameraImage(spinimage, Float64, normalize=true)
+```
+
+One may directly save an acquired image to disc:
+
+```julia
+saveimage(cam, "output.png", Spinnaker.PNG)
+```
+
+
 
 ### Demo
 
