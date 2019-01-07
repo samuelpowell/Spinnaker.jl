@@ -8,6 +8,7 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        trigger!,
        exposure!,
        framerate!,
+       streambufferhandlingmode, streambufferhandlingmode!,
        gain!,
        adcbits, adcbits!,
        gammaenable!,

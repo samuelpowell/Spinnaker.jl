@@ -35,6 +35,30 @@ function stop!(cam::Camera)
 end
 
 """
+  streambufferhandlingmode(::Camera) -> String
+
+  Return stream buffer handling mode from selection of:
+    OldestFirst
+    OldestFirstOverwrite
+    NewestFirst
+    NewestFirstOverwrite
+    NewestOnly
+"""
+streambufferhandlingmode(cam::Camera) = IEnumNode(cam, "StreamBufferHandlingMode")
+
+"""
+  streambufferhandlingmode!(::Camera, ::String) -> String
+
+  Set stream buffer handling mode from selection of:
+    OldestFirst
+    OldestFirstOverwrite
+    NewestFirst
+    NewestFirstOverwrite
+    NewestOnly
+"""
+streambufferhandlingmode!(cam::Camera, mode) = IEnumNode!(cam, "StreamBufferHandlingMode", mode)
+
+"""
   triggermode(::Camera) -> String
 
   Return if camera trigger mode.
