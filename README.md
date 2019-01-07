@@ -117,7 +117,7 @@ in this way by specifying the desired data format:
 julia> getimage(cam, Gray{N0f8}, normalize=true);
 julia> getimage(cam, Float64, normalize=false)
 1440×1080 CameraImage{Float64,2}:
- 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0
+ 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0 
 ```
 
 By specifying `normalize=true` the image data from the camera is intepreted as a
@@ -158,7 +158,7 @@ julia> getimage!(cam, image)
 Spinnaker Image, (1440, 1080), 16bpp, PixelFormat_Mono16(1)
 ```
 
-Alternatively,
+Alternatively, 
 It is possible to convert a `SpinImage` to a `CameraImage` using the `CameraImage`
 constructor:
 
