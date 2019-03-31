@@ -12,19 +12,19 @@ function _getnode(name::String, nodemap)
   return hNode
 end
 
-abstract type AbstractNode end
+abstract type AbstractSpinNode end
 
 #
 # Integer nodes
 #
 
-struct IntegerNode <: AbstractNode
+struct SpinIntegerNode <: AbstractSpinNode
   name::String
   hNode::Ref{spinNodeHandle}
-  IntegerNode(name::String, nodemap=CameraNodeMap()) = IntegerNode(name, _getnode(name, nodemap))
+  SpinIntegerNode(name::String, nodemap=CameraNodeMap()) = SpinIntegerNode(name, _getnode(name, nodemap))
 end
 
-function range(node::IntegerNode)
+function range(node::SpinIntegerNode)
   hMin = Ref(Int64(0.0))
   hMax = Ref(Int64(0.0))
   spinIntegerGetMin(hNode[], hMin)
@@ -32,7 +32,7 @@ function range(node::IntegerNode)
   return (hMin[], hMax[])
 end
 
-function set!(node::IntegerNode, value::Number)
+function set!(node::SpinIntegerNode, value::Number)
   if !writable(node.hNode)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
@@ -43,7 +43,7 @@ function set!(node::IntegerNode, value::Number)
   get(node)  
 end
 
-function get(node::IntegerNode)
+function get(node::SpinIntegerNode)
   if !readable(node.hNode)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
@@ -58,13 +58,13 @@ end
 # Floating point nodes
 #
 
-struct FloatNode <: AbstractNode
+struct SpinFloatNode <: AbstractSpinNode
   name::String
   hNode::Ref{spinNodeHandle}
-  FloatNode(name::String, nodemap=CameraNodeMap()) = FloatNode(name, _getnode(name, nodemap))
+  SpinFloatNode(name::String, nodemap=CameraNodeMap()) = SpinFloatNode(name, _getnode(name, nodemap))
 end
 
-function range(node::FloatNode)
+function range(node::SpinFloatNode)
   hMin = Ref(Float64(0.0))
   hMax = Ref(Float64(0.0))
   spinFloatGetMin(hNode[], hMin)
@@ -72,7 +72,7 @@ function range(node::FloatNode)
   return (hMin[], hMax[])
 end
 
-function set!(node::FloatNode, value::Number)
+function set!(node::SpinFloatNode, value::Number)
   if !writable(node.hNode)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
@@ -83,7 +83,7 @@ function set!(node::FloatNode, value::Number)
   get(node)  
 end
 
-function get(node::FloatNode)
+function get(node::SpinFloatNode)
   if !readable(node.hNode)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
@@ -98,13 +98,13 @@ end
 # Integer enumeration nodes 
 #
 
-struct EnumNode <: AbstractNode
+struct SpinEnumNode <: AbstractSpinNode
   name::String
   hNode::Ref{spinNodeHandle}
-  EnumNode(name::String, nodemap=CameraNodeMap()) = EnumNode(name, _getnode(name, nodemap))
+  SpinEnumNode(name::String, nodemap=CameraNodeMap()) = SpinEnumNode(name, _getnode(name, nodemap))
 end
 
-function get(node::EnumNode)
+function get(node::SpinEnumNode)
   if !readable(node.hNode)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
@@ -116,7 +116,7 @@ function get(node::EnumNode)
   return unsafe_string(pointer(strbuf))
 end
 
-function set!(node::EnumNode, value)
+function set!(node::SpinEnumNode, value)
   if !readable(node.hNode)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
@@ -145,13 +145,13 @@ end
 # Boolean mnodes
 #
 
-struct BooleanNode <: AbstractNode
+struct SpinBooleanNode <: AbstractSpinNode
   name::String
   hNode::Ref{spinNodeHandle}
-  BooleanNode(name::String, nodemap=CameraNodeMap()) = BooleanNode(name, _getnode(name, nodemap))
+  SpinBooleanNode(name::String, nodemap=CameraNodeMap()) = SpinBooleanNode(name, _getnode(name, nodemap))
 end
 
-function get(node::BooleanNode)
+function get(node::SpinBooleanNode)
   if !readable(node.hNode)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
@@ -160,7 +160,7 @@ function get(node::BooleanNode)
   return hval[] == 1 ? true : false
 end
 
-function set!(node::BooleanNode, value::Bool)
+function set!(node::SpinBooleanNode, value::Bool)
   if !writable(node.hNode)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
