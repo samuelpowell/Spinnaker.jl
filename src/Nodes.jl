@@ -336,10 +336,10 @@ end
 
   Return value of boolean node.
 """
-function IBooleanNode(cam::Camera,
-                      name::String,
-                      value::Bool;
-                      nodemap::AbstractNodeMap = CameraNodeMap())
+function IBooleanNode!(cam::Camera,
+                       name::String,
+                       value::Bool;
+                       nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   _nodemap!(cam, hNodeMap, nodemap)

@@ -25,8 +25,9 @@ const nrm_fmtmap =  Dict(PixelFormat_Mono8  => N0f8,
 
 struct CameraImage{T,N} <: AbstractArray{T,N}
     data::Array{T,N}
-    id::UInt64
-    timestamp::UInt64
+    id::Int64
+    timestamp::Int64
+    exposure::Float64
 end
 
 size(a::CameraImage) = size(a.data)
@@ -36,6 +37,7 @@ IndexStyle(::Type{<:CameraImage}) = IndexLinear()
 
 id(image::CameraImage) = image.id
 timestamp(image::CameraImage) = image.timestamp
+exposure(image::CameraImage) = image.exposure
 
 """
     CameraImage(::SpinImage, ::Type{T}, normalize=false)
@@ -47,7 +49,7 @@ function CameraImage(spinim::SpinImage, ::Type{T}; normalize=false) where T
     width, height = size(spinim)
     imdat = Array{T,2}(undef, width, height)
     _copyimage!(spinim.handle, width, height, imdat, normalize)
-    return CameraImage(imdat, id(spinim), timestamp(spinim))
+    return CameraImage(imdat, id(spinim), timestamp(spinim), exposure(spinim))
 end
 
 function _copyimage!(himage_ref::spinImage,

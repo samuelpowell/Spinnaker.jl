@@ -124,23 +124,34 @@ end
 """
     timestamp(::SpinImage) -> Int64
 
-    Return image timestamp in nanoseconds since the last timeclock reset (i.e. at camera boot).
+    Return image timestamp from chunk data in nanoseconds since the last timeclock reset (i.e. at camera boot).
 """
 function timestamp(image::SpinImage)
-    timestamp_ref = Ref(UInt64(0))
-    spinImageGetTimeStamp(image, timestamp_ref);
+    timestamp_ref = Ref(Int64(0))
+    spinImageChunkDataGetIntValue(hImage, "ChunkTimestamp", timestamp_ref)
     return timestamp_ref[]
 end
 
 """
     id(::SpinImage) -> Int64
 
-    Return image id, as assigned by camera.
+    Return image id from image chunk data.
 """
 function id(image::SpinImage)
-    id_ref = Ref(UInt64(0))
-    spinImageGetID(image, id_ref);
+    id_ref = Ref(Int64(0))
+    spinImageChunkDataGetIntValue(hImage, "ChunkFrameID", id_ref);
     return id_ref[]
+end
+
+"""
+    exposure(::SpinImage) -> Float64
+
+    Return exposure time from image chunk data.
+"""
+function exposure(image::SpinImage)
+    hExposure = Ref(Float64(0))
+    spinImageChunkDataGetFloatValue(image, "ChunkExposureTime", hExposure);
+    return hExposure[]
 end
 
 """
@@ -151,3 +162,4 @@ end
 function save(image::SpinImage, fn::AbstractString, fmt::spinImageFileFormat)
     spinImageSave(image, fn, fmt)
 end
+

@@ -116,8 +116,14 @@ See `gammaenable(!)`, `pixelformat(!)`, `adcbits(!)`, `sensordims`, `imagedims(!
 
 ### Retrieving images
 
-All of the following functions are blocking, and execution will halt until an
-image is available.
+All of the following functions are blocking, and execution will halt until an image is available. For each function the keyword argument `release=true` is supported which by default will release the buffer for further use. If you choose `release=false` then the buffer will not be released, allowing one to inspect the image without removing it from the stream buffer (e.g the next call to the function will return the same image).
+
+Images can be retrieved in three formats:
+ - CameraImage, an abstract array interface of arbitrary type, which stores metadata about the image;
+ - Array, a raw Julia array of arbitrary type, with metadata returned as additional return values;
+ - SpinImage, an internal Spinnaker library image type, which can be queried for metadata.
+
+#### CameraImage
 
 If the pixel format from the camera is _unpacked_ Images can be retrieved to a `CameraImage` type which provides an `AbstractArray` interface to the underlying data, in addition to storing metadata available when the image is acquired. One can acquire an image
 in this way by specifying the desired data format:
@@ -132,16 +138,34 @@ julia> getimage(cam, Float64, normalize=false)
 By specifying `normalize=true` the image data from the camera is intepreted as a
 fixed point number in the range [0,1]. By combining this with a fixed point Colorant type `Gray{N0f8}`, this provides direct compatibilty with the Julia images stack. Alterantively, without normalisation the unsigned integer data returned from the camera will be supplied in its natural range, e.g., a Mono8 pixel format will result in values in the range [0, 255].
 
-Mutating versions are available, where the type is determined from the input.
-If the input type is a `CameraImage` the metadata will be updated and the underlying data array reused. Alternatively if this is a raw Julia array, only the
-data will be updated:
+Mutating versions are available, where the type is determined from the input, the metadata will be updated and the underlying data array reused. 
 
 ```julia
 julia> getimage!(cam, cameraimage);
-julia> getimage!(cam, Array{Float64}(undef, width, height))
-1440×1080 Array{Float32,2}:
- 99.0  93.0  90.0  91.0  84.0  92.0   92.0  99.0  …  84.0  79.0  85.0  81.0  82.0  
+1440×1080 CameraImage{Float64,2}:
+ 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0 
 ```
+
+Metadata such as the id, timestamp, and exposure can be returned from the CameraImage:
+
+```julia
+julia> id(getimage(camera, Float64))
+391050
+
+julia> id(getimage(camera, Float64))
+391051
+```
+
+#### Array
+
+A raw Julia array can be passed to the mutating form `getimage!`, which operates in the same way as the method which accepts the CameraImage format, however the metadata will be returned by the function:
+
+```julia
+julia> imid, imtimestamp, imexposure = getimage!(camera, Array{Float64}(undef, 1440, 1080))
+(391055, 20685632735104, 14996.0)
+```
+
+#### SpinImage
 
 Alternatively, a `SpinImage` type can be retrieved from the camera, which supports all
 possible pixel formats, including packed data. To copy the image from the camera buffer, and release the buffer for acquisition:

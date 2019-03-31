@@ -144,20 +144,26 @@ function _isimagecomplete(himage_ref)
   end
 end
 
-"""
-  getimage(::Camera) -> Image
-
-  Copy the next image from the specified camera, blocking until available.
-"""
-getimage(cam::Camera) = getimage!(cam, SpinImage())
-
+#
+# Image retrieval -> SpinImage
+#
 
 """
-  getimage!(::Camera, ::Image) -> Image
+  getimage(::Camer; release=true) -> Image
+
+  Copy the next image from the specified camera, blocking until available. If release
+  is false, the image buffer is not released.
+"""
+getimage(cam::Camera; release=true) = getimage!(cam, SpinImage(), release=release)
+
+
+"""
+  getimage!(::Camera, ::SpinImage; release=true) -> Image
 
   Copy the next image from the specified camera, blocking until available, overwriting existing.
+  If releaseis false, the image buffer is not released.
 """
-function getimage!(cam::Camera, image::SpinImage)
+function getimage!(cam::Camera, image::SpinImage; release=true)
 
   # Get image handle and check it's complete
   himage_ref = Ref(spinImage(C_NULL))
@@ -166,40 +172,24 @@ function getimage!(cam::Camera, image::SpinImage)
 
   # Create output image, copy and release buffer
   spinImageDeepCopy(himage_ref[], image)
-  spinImageRelease(himage_ref[])
+  if release
+    spinImageRelease(himage_ref[])
+  end
 
   return image
 
 end
-                     
-function _pullim(cam::Camera)
 
-    # Get image handle and check it's complete
-    himage_ref = Ref(spinImage(C_NULL))
-    spinCameraGetNextImage(cam, himage_ref);
-    if !_isimagecomplete(himage_ref)
-      spinImageRelease(himage_ref[])
-      throw(ErrorException("Image not complete"))
-    end
 
-    # Get image dimensions, ID and timestamp
-    width = Ref(Csize_t(0))
-    height = Ref(Csize_t(0))
-    id = Ref(UInt64(0))
-    timestamp = Ref(UInt64(0))
-    spinImageGetWidth(himage_ref[], width)
-    spinImageGetHeight(himage_ref[], height)
-    spinImageGetID(himage_ref[], id)
-    spinImageGetTimeStamp(himage_ref[], timestamp)
-    return himage_ref, Int(width[]), Int(height[]), id[], timestamp[]
-
-end
+#
+# Image retrieval -> CameraImage
+#
 
 """
-  getimage(::Camera, ::Type{T}; normalize=false) -> CameraImage
+  getimage(::Camera, ::Type{T}; normalize=true; release=true) -> CameraImage
 
-  Copy the next iamge from the specified camera, converting the image data to the specified array
-  format, blocking until available.
+  Copy the next image from the specified camera, converting the image data to the specified array
+  format, blocking until available. If release is false, the image buffer is not released.
 
   If `normalize == false`, the input data from the camera is interpreted as a number in the range of
   the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
@@ -212,23 +202,25 @@ end
 
   Function also returns image ID and timestamp metadata.
 """
-function getimage(cam::Camera, ::Type{T}; normalize=true) where T
+function getimage(cam::Camera, ::Type{T}; normalize=true, release=true) where T
 
-  himage_ref, width, height, id, timestamp = _pullim(cam)
+  himage_ref, width, height, id, timestamp, exposure = _pullim(cam)
   imdat = Array{T,2}(undef, (width,height))
-  camim = CameraImage(imdat, id, timestamp)
+  camim = CameraImage(imdat, id, timestamp, exposure)
   _copyimage!(himage_ref[], width, height, camim, normalize)
-  spinImageRelease(himage_ref[])
+  if release
+    spinImageRelease(himage_ref[])
+  end
   return camim
 
 end
 
 
 """
-  getimage!(::Camera, ::CameraImage{T,2}; normalize=false) 
+  getimage!(::Camera, ::CameraImage{T,2}; normalize=false; release=true)
 
   Copy the next iamge from the specified camera, converting to the format of, and overwriting the 
-  provided CamerImage.
+  provided CameraImage. If release is false, the image buffer is not released.
   
   If `normalize == false`, the input data from the camera is interpreted as a number in the range of
   the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
@@ -239,65 +231,92 @@ end
   To return images compatible with Images.jl, one can request a Gray value, e.g.,
   `getimage!(cam, Gray{N0f8}, normalize=true)`. 
 """
-function getimage!(cam::Camera, image::CameraImage{T,2}; normalize=true) where T
+function getimage!(cam::Camera, image::CameraImage{T,2}; normalize=true, release=true) where T
   
-  himage_ref, width, height, id, timestamp = _pullim(cam)
-  camim = CameraImage(image.data, id, timestamp)
+  himage_ref, width, height, id, timestamp, exposure = _pullim(cam)
+  camim = CameraImage(image.data, id, timestamp, exposure)
   _copyimage!(himage_ref[], width, height, camim, normalize)
-  spinImageRelease(himage_ref[])
+  if release
+    spinImageRelease(himage_ref[])
+  end
   return camim
+
+end
+                     
+function _pullim(cam::Camera)
+
+  # Get image handle and check it's complete
+  himage_ref = Ref(spinImage(C_NULL))
+  spinCameraGetNextImage(cam, himage_ref);
+  if !_isimagecomplete(himage_ref)
+    spinImageRelease(himage_ref[])
+    throw(ErrorException("Image not complete"))
+  end
+
+  # Get image dimensions, ID and timestamp
+  width = Ref(Csize_t(0))
+  height = Ref(Csize_t(0))
+  id = Ref(Int64(0))
+  timestamp = Ref(Int64(0))
+  exposure = Ref(Float64(0))
+  spinImageGetWidth(himage_ref[], width)
+  spinImageGetHeight(himage_ref[], height)
+  spinImageChunkDataGetIntValue(himage_ref[], "ChunkFrameID", id);
+  spinImageChunkDataGetFloatValue(himage_ref[], "ChunkExposureTime", exposure);
+  spinImageChunkDataGetIntValue(himage_ref[], "ChunkTimestamp", timestamp)
+  return himage_ref, Int(width[]), Int(height[]), id[], timestamp[], exposure[]
 
 end
 
 
+#
+# Image retrieval -> Array
+#
+
 """
-  getimage!(::Camera, ::AbstractArray{T,2}; normalize=false)
+  getimage!(::Camera, ::AbstractArray{T,2}; normalize=false, relase=true)
 
   Copy the next iamge from the specified camera, converting to the format of, and overwriting the 
-  provided CamerImage.
+  provided abstract array. If release is false, the image buffer is not released.
   
   If `normalize == false`, the input data from the camera is interpreted as a number in the range of
   the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
-  `getimage!(cam, Float64, normalize=false)` will return an array of dobule precision numbers in
-  the range [0, 255]. `If normalize == true` the input data is interpreted as an associated fixed point
-  format, and thus the array will be in the range [0,1].
-
-  To return images compatible with Images.jl, one can request a Gray value, e.g.,
-  `getimage!(cam, Gray{N0f8}, normalize=true)`. 
+  `getimage!(cam, Array{Float64}(undef, dims...), normalize=false)` will return an array of dobule
+  precision numbers in the range [0, 255]. `If normalize == true` the input data is interpreted as
+  an associated fixed point format, and thus the array will be in the range [0,1].
 """
-function getimage!(cam::Camera, image::Array{T,2}; normalize=true) where T
+function getimage!(cam::Camera, image::Array{T,2}; normalize=true, release=true) where T
   
-  himage_ref, width, height, id, timestamp = _pullim(cam)
+  himage_ref, width, height, id, timestamp, exposure = _pullim(cam)
   _copyimage!(himage_ref[], width, height, image, normalize)
-  spinImageRelease(himage_ref[])
-  return image
+  if release
+    spinImageRelease(himage_ref[])
+  end
+  return id, timestamp, exposure
 
 end
 
+
+#
+# Image retrieval -> File
+#
+
 """
-    saveimage()::Camera, fn::AbstractString, ::spinImageFileFormat)
+    saveimage()::Camera, fn::AbstractString, ::spinImageFileFormat; release=true)
 
     Save the next image from the specified camera to file `fn`, blocking until
-    available.
+    available. If release is false, the image buffer is not released.
 """
-function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat)
+function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat; relase=true)
 
     # Get image handle and check it's complete
     himage_ref = Ref(spinImage(C_NULL))
     spinCameraGetNextImage(cam, himage_ref);
     @assert _isimagecomplete(himage_ref)
     spinImageSave(himage_ref[], fn, fmt)
-    spinImageRelease(himage_ref[])
+    if release
+      spinImageRelease(himage_ref[])
+    end
 
 end
 
-"""
-  getbufferimage(::Camera) -> Image
-
-  Get the next image from the specified camera, blocking until available. The
-  returned image is held in the image buffer, and must be released to enable
-  continuing capture by calling `release(::Image)`.
-"""
-function getbufferimage(cam::Camera)
-  @error "Not implemented"
-end
