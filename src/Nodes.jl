@@ -31,24 +31,6 @@ function writable(nodeName)
 end
 
 # Node maps
-
-abstract type AbstractNodeMap end
-
-struct CameraNodeMap <: AbstractNodeMap end
-function _nodemap!(cam, hNodeMap, nm::CameraNodeMap) 
-  spinCameraGetNodeMap(cam, hNodeMap)
-end
-
-struct CameraTLDeviceNodeMap <: AbstractNodeMap end
-function _nodemap!(cam, hNodeMap, nm::CameraTLDeviceNodeMap)
-  spinCameraGetTLDeviceNodeMap(cam, hNodeMap)
-end
-
-struct CameraTLStreamNodeMap <: AbstractNodeMap end
-function _nodemap!(cam, hNodeMap, nm::CameraTLStreamNodeMap)
-  spinCameraGetTLStreamNodeMap(cam, hNodeMap)
-end
-
 function GetStringNode(cam::Camera,
                        name::AbstractString;
                        nodemap::AbstractNodeMap = CameraNodeMap())

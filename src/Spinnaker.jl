@@ -47,6 +47,8 @@ include("CameraImage.jl")
 include("System.jl")
 include("Camera.jl")
 include("CameraList.jl")
+include("NodeMap.jl")
+include("Nodes2.jl")
 include("Nodes.jl")
 
 # Create a System object at runtime
