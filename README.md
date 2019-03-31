@@ -103,7 +103,16 @@ julia> adcbits!(cam, "Bit12")
 "Bit12"
 ```
 
-See `gammaenable(!)`, `pixelformat(!)`, `adcbits(!)`
+Set the image size and offset:
+```julia
+julia> imagedims!(cam, (1024, 1024))
+(1024, 1024)
+
+julia> offsetdims!(cam, (0,10))
+(0, 10)
+```
+
+See `gammaenable(!)`, `pixelformat(!)`, `adcbits(!)`, `sensordims`, `imagedims(!)`, `offsetdims(!)`.
 
 ### Retrieving images
 
