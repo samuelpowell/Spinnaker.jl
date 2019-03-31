@@ -35,6 +35,12 @@ mutable struct Camera
     spinCameraInit(handle)
     cam = new(handle)
     finalizer(_release!, cam)
+    # Activate chunk mode
+    IBooleanNode!(cam, "ChunkModeActive", true)
+    for chunkid in ["FrameID", "ExposureTime", "Timestamp"]
+      IEnumNode!(cam, "ChunkSelector", chunkid)
+      IBooleanNode!(cam, "ChunkEnable", true)
+    end
     return cam
   end
 end
