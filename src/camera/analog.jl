@@ -20,3 +20,18 @@ function gain!(cam::Camera, g)
   IEnumNode!(cam, "GainAuto", "Off")
   IFloatNode!(cam, "Gain", g)
 end
+
+
+"""
+  gammaenable(::Camera) -> Bool
+
+  Return status of gamma correction
+"""
+gammaenable(cam::Camera) = IBooleanNode(cam, "GammaEnable")
+
+"""
+  gammaenable!(::Camera, ::Bool) -> Bool
+
+  Enable or disable gamma correction on camera.
+"""
+gammaenable!(cam::Camera, en::Bool) = IBooleanNode(cam, "GammaEnable", en)

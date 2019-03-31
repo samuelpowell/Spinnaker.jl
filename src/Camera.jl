@@ -13,6 +13,7 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        gammaenable!,
        pixelformat, pixelformat!,
        acqusitionmode, acquisitionmode!,
+       sensordims, imagedims, imagedims!, offsetdims, offsetdims!,
        buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed
 
 """
