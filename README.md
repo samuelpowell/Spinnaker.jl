@@ -172,6 +172,18 @@ One may directly save an acquired image to disc:
 saveimage(cam, "output.png", Spinnaker.PNG)
 ```
 
+### Buffer handling
+
+Please note the [specifics](https://www.ptgrey.com/tan/11174) of buffer handling to 
+understand the expected behaviour of the various buffer modes.
+
+To determine the current buffer mode, 
+
+```julia
+julia> buffermode(cam)
+
+TODO:
+```
 
 
 ### Demo
@@ -203,3 +215,17 @@ julia> saveimage(cam, joinpath(@__DIR__, "test.png"), spinImageFileFormat(6))
 julia> stop!(cam)
 FLIR Blackfly S BFS-U3-16S2M (XXXXXXXX)
 ```
+
+
+## Implementation and development
+
+### Nodes
+
+The operation of this package revolves around the manipulation of [nodes](https://www.ptgrey.com/tan/11153) defined by a camera specification (typically provided as 
+an XML file). Nodes exist as part of a node map, of which there are several: the 
+camera node map controls camera features; the stream node map controls image buffers; and the transport node map controls the speciifc transport layer of the device. Nodes values by
+be integer valued, floating point valued, an enumeration, etc. Node operations are
+currently defined in the `Node.jl` source file. Future development could refine this
+interface, inlclud a significant reduction in code duplication, by introducing a node type
+which, alongside the nodemap types introduced recently, would allow dispatch to implement
+the appropriate actions.

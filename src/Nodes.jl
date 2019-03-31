@@ -54,7 +54,7 @@ function GetStringNode(cam::Camera,
                        nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  _nodemap!(cam, hNodeMap, CameraTLDeviceNodeMap())
+  _nodemap!(cam, hNodeMap, nodemap)
   
   #  Get camera vendor name
   hNode = Ref(spinNodeHandle(C_NULL))
@@ -73,7 +73,7 @@ function GetStringNode(cam::Camera,
 end
 
 """
-  IEnumNode!(::Cam, name::String, value::String, reinit=false) -> String
+  IEnumNode!(::Cam, name::String, value::String, reinit=false; nodemap) -> String
 
   Set the enumeration node `name` to `value` on specified camera. If `reinit` is
   true, the camera is deinitialised and reinitialised prior to node access. The
@@ -88,8 +88,8 @@ function IEnumNode!(cam::Camera,
    reinit && _reinit(cam)
 
    hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-   spinCameraGetNodeMap(cam, hNodeMap)
-
+   _nodemap!(cam, hNodeMap, nodemap)
+  
    # Get the enumeration node
    hNode = Ref(spinNodeHandle(C_NULL))
    spinNodeMapGetNode(hNodeMap[], name, hNode);
@@ -115,16 +115,15 @@ function IEnumNode!(cam::Camera,
    spinEnumerationSetIntValue(hNode[], hNodeVal[])
 
    # Readback
-   return IEnumNode(cam, name)
+   return IEnumNode(cam, name, nodemap=nodemap)
 
 end
 
 """
-  IEnumNode(::Cam, name::String, reinit=false) -> String
+  IEnumNode(::Cam, name::String, reinit=false; nodemap) -> String
 
-  Retrieve the enumeration node `name` to `value` on specified camera. If
-  `reinit` is true, the camera is deinitialised and reinitialised prior to node
-  access.
+  Retrieve the enumeration node `name` on specified camera. If `reinit` is true,
+  the camera is deinitialised and reinitialised prior to node access.
 """
 function IEnumNode(cam::Camera,
                    name::AbstractString,
@@ -134,8 +133,8 @@ function IEnumNode(cam::Camera,
    reinit && _reinit(cam)
 
    hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-   spinCameraGetNodeMap(cam, hNodeMap)
-
+   _nodemap!(cam, hNodeMap, nodemap)
+  
    hNode = Ref(spinNodeHandle(C_NULL))
    spinNodeMapGetNode(hNodeMap[], name, hNode);
    if !readable(hNode)
@@ -154,10 +153,72 @@ function IEnumNode(cam::Camera,
 end
 
 """
-  IFloatNode(::Cam, name::String, reinit=false) -> Float64
+  IIntegerNode(::Cam, name::String, reinit=false; nodemap) -> Int
 
-  Retrieve the float node `name` to `value` on specified camera. If `reinit` is
-  true, the camera is deinitialised and reinitialised prior to node access.
+  Retrieve the integer node `name` on specified camera. If `reinit` is  true, the 
+  camera is deinitialised and reinitialised prior to node access.
+"""
+function IIntegerNode(cam::Camera,
+                      name::AbstractString,
+                      reinit = false;
+                      nodemap::AbstractNodeMap = CameraNodeMap())
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  _nodemap!(cam, hNodeMap, nodemap)
+  
+  # Set manual exposure time
+  hNode = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], name, hNode);
+  if !readable(hNode)
+    throw(ErrorException("Node $name is not readable"))
+  end
+
+  hsetvalue = Ref(Int64(0.0))
+  spinIntegerGetValue(hNode[], hsetvalue)
+  return hsetvalue[]
+
+end
+
+
+"""
+IIntegerNode!(::Cam, name::String, value::Integer, reinit=false; nodemap) -> Integer
+
+  Set the integer node `name` to `value` on specified camera. If `reinit` is
+  true, the camera is deinitialised and reinitialised prior to node access. The
+  value is clamped to the allowable range, and the actual value is read back
+  and returned.
+"""
+function IIntegerNode!(cam::Camera,
+                     name::AbstractString,
+                     value::Integer,
+                     reinit = false;
+                     nodemap::AbstractNodeMap = CameraNodeMap())
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  _nodemap!(cam, hNodeMap, nodemap)
+  
+  # Get node
+  hNode = Ref(spinNodeHandle(C_NULL))
+  hsetvalue = Ref(Integer(0))
+  spinNodeMapGetNode(hNodeMap[], name, hNode);
+
+  # Clamp and set range
+  if !writable(hNode)
+    throw(ErrorException("Node $name is not writable"))
+  end
+  spinIntegerSetValue(hNode[], Int64(value))
+  spinIntegerGetValue(hNode[], hsetvalue)
+
+  return hsetvalue[]
+
+end
+
+
+"""
+  IFloatNode(::Cam, name::String, reinit=false; nodemap) -> Float64
+
+  Retrieve the float node `name` on specified camera. If `reinit` is  true, the 
+  camera is deinitialised and reinitialised prior to node access.
 """
 function IFloatNode(cam::Camera,
                     name::AbstractString,
@@ -165,8 +226,8 @@ function IFloatNode(cam::Camera,
                     nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetNodeMap(cam, hNodeMap)
-
+  _nodemap!(cam, hNodeMap, nodemap)
+  
   # Set manual exposure time
   hNode = Ref(spinNodeHandle(C_NULL))
   spinNodeMapGetNode(hNodeMap[], name, hNode);
@@ -182,7 +243,7 @@ end
 
 
 """
-  IFloatNodeRange(::Cam, name::AbstractString) -> (min, max)
+  IFloatNodeRange(::Cam, name::AbstractString; nodemap) -> (min, max)
 
   Return range of floating point node.
 """
@@ -191,8 +252,8 @@ function IFloatNodeRange(cam::Camera,
                          nodemap::AbstractNodeMap = CameraNodeMap())
 
     hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-    spinCameraGetNodeMap(cam, hNodeMap)
-
+    _nodemap!(cam, hNodeMap, nodemap)
+  
     # Set manual exposure time
     hNode = Ref(spinNodeHandle(C_NULL))
     hvalmin = Ref(Float64(0.0))
@@ -211,7 +272,7 @@ end
 
 
 """
-  IFloatNode!(::Cam, name::String, value::Number, reinit=false) -> Float64
+  IFloatNode!(::Cam, name::String, value::Number, reinit=false; nodemap) -> Float64
 
   Set the float node `name` to `value` on specified camera. If `reinit` is
   true, the camera is deinitialised and reinitialised prior to node access. The
@@ -225,8 +286,8 @@ function IFloatNode!(cam::Camera,
                      nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetNodeMap(cam, hNodeMap)
-
+  _nodemap!(cam, hNodeMap, nodemap)
+  
   # Get node
   hNode = Ref(spinNodeHandle(C_NULL))
   hsetvalue = Ref(Float64(0.0))
@@ -244,7 +305,7 @@ function IFloatNode!(cam::Camera,
 end
 
 """
-  IBooleanNode(::Cam, name::String) -> Bool
+  IBooleanNode(::Cam, name::String; nodemap) -> Bool
 
   Return value of boolean node.
 """
@@ -253,8 +314,8 @@ function IBooleanNode(cam::Camera,
                       nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetNodeMap(cam, hNodeMap)
-
+  _nodemap!(cam, hNodeMap, nodemap)
+  
   # Get node
   hNode = Ref(spinNodeHandle(C_NULL))
   hval = Ref(bool8_t(0))
@@ -271,7 +332,7 @@ function IBooleanNode(cam::Camera,
 end
 
 """
-  IBooleanNode!(::Cam, name::String, value::Bool) -> Bool
+  IBooleanNode!(::Cam, name::String, value::Bool; nodemap) -> Bool
 
   Return value of boolean node.
 """
@@ -281,8 +342,8 @@ function IBooleanNode(cam::Camera,
                       nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetNodeMap(cam, hNodeMap)
-
+  _nodemap!(cam, hNodeMap, nodemap)
+  
   # Get node
   hNode = Ref(spinNodeHandle(C_NULL))
   hval = Ref(bool8_t(0))
