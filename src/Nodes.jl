@@ -135,9 +135,9 @@ end
   Retrieve the float node `name` to `value` on specified camera. If `reinit` is
   true, the camera is deinitialised and reinitialised prior to node access.
 """
-function IFloatNode!(cam::Camera,
-                     name::AbstractString,
-                     reinit = false)
+function IFloatNode(cam::Camera,
+                    name::AbstractString,
+                    reinit = false)
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
