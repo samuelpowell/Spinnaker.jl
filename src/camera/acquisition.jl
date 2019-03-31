@@ -39,14 +39,14 @@ end
 
   Return if camera trigger mode.
 """
-triggermode(cam::Camera) = IEnumNode(cam, "TriggerMode")
+triggermode(cam::Camera) = get(SpinEnumNode(cam, "TriggerMode"))
 
 """
   triggermode!(::Camera, ::String) -> String
 
   Set camera trigger mode, returns set mode.
 """
-triggermode!(cam::Camera, mode) = IEnumNode!(cam, "TriggerMode", mode)
+triggermode!(cam::Camera, mode) = set!(SpinEnumNode(cam, "TriggerMode"), mode)
 
 """
   triggersource!(::Camera, ::AbstractString) -> String
@@ -56,7 +56,7 @@ triggermode!(cam::Camera, mode) = IEnumNode!(cam, "TriggerMode", mode)
 """
 function triggersource!(cam::Camera, src)
   initmode = triggermode(cam)   # Save current trigger mode
-  setsrc = IEnumNode!(cam, "TriggerSource", src)
+  setsrc = set!(SpinEnumNode(cam, "TriggerSource"), src)
   triggermode!(cam, initmode)   # Restore initial trigger mode
   return setsrc
 end
@@ -66,7 +66,7 @@ end
 
   Return current camera trigger source.
 """
-triggersource(cam::Camera) = IEnumNode(cam, "TriggerSource")
+triggersource(cam::Camera) = get(SpinEnumNode(cam, "TriggerSource"))
 
 """
   trigger!(::Camera)
@@ -98,7 +98,7 @@ end
 
   Activate (continuous) automatic exposure control on specified camera.
 """
-exposure!(cam::Camera) = IEnumNode!(cam, "ExposureAuto", "Continuous")
+exposure!(cam::Camera) = set!(SpinEnumNode(cam, "ExposureAuto"), "Continuous")
 
 """
   exposure!(::Camera, ::Number) -> Float
@@ -108,8 +108,8 @@ exposure!(cam::Camera) = IEnumNode!(cam, "ExposureAuto", "Continuous")
   is returned. This function disables automatic exposure.
 """
 function exposure!(cam::Camera, t)
-  IEnumNode!(cam, "ExposureAuto", "Off")
-  IFloatNode!(cam, "ExposureTime", t)
+  set!(SpinEnumNode(cam, "ExposureAuto"), "Off")
+  set!(SpinFloatNode(cam, "ExposureTime"), t)
 end
 
 
@@ -121,5 +121,5 @@ end
   is returned.
 """
 function framerate!(cam::Camera, fps)
-  IFloatNode!(cam, "AcquisitionFrameRate", fps)
+  set!(SpinFloatNode(cam, "AcquisitionFrameRate"), fps)
 end

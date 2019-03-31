@@ -10,7 +10,7 @@
 	The current stream buffer mode of the camera.
 """
 function buffermode(cam::Camera)
-	IEnumNode(cam::Camera, "StreamBufferHandlingMode", nodemap = CameraTLStreamNodeMap())
+	get(SpinEnumNode(cam::Camera, "StreamBufferHandlingMode", CameraTLStreamNodeMap()))
 end
 
 
@@ -27,7 +27,7 @@ end
 	See https://www.ptgrey.com/tan/11174 for more details.
 """
 function buffermode!(cam::Camera, mode::String)
-	IEnumNode!(cam, "StreamBufferHandlingMode", mode, nodemap=CameraTLStreamNodeMap())
+	set!(SpinEnumNode(cam, "StreamBufferHandlingMode", CameraTLStreamNodeMap()), mode)
 end
 
 
@@ -37,8 +37,8 @@ end
 	Return the buffer count mode and specified number of buffers.
 """
 function buffercount(cam::Camera)
-	count = IIntegerNode(cam, "StreamBufferCountResult", nodemap=CameraTLStreamNodeMap())
-	mode = IEnumNode(cam, "StreamBufferCountMode", nodemap=CameraTLStreamNodeMap())
+	count = get(SpinIntegerNode(cam, "StreamBufferCountResult", CameraTLStreamNodeMap()))
+	mode = get(SpinEnumNode(cam, "StreamBufferCountMode", CameraTLStreamNodeMap()))
 	return Int(count), mode
 end
 
@@ -49,7 +49,7 @@ end
 	Set buffer count mode to automatic. Returns the buffer count and mode.
 """
 function buffercount!(cam::Camera)
-	IEnumNode!(cam, "StreamBufferCountMode", "Auto", nodemap=CameraTLStreamNodeMap())
+	set!(SpinEnumNode(cam, "StreamBufferCountMode", CameraTLStreamNodeMap()), "Auto")
 	buffercount(cam)
 end
 
@@ -61,8 +61,8 @@ end
 	buffer count and mode.
 """
 function buffercount!(cam::Camera, count)
-	IEnumNode!(cam, "StreamBufferCountMode", "Manual", nodemap=CameraTLStreamNodeMap())
-	IIntegerNode!(cam, "StreamBufferCountManual", count, nodemap=CameraTLStreamNodeMap())
+	set!(SpinEnumNode(cam, "StreamBufferCountMode", CameraTLStreamNodeMap()), "Manual")
+	set!(SpinIntegerNode(cam, "StreamBufferCountManual", CameraTLStreamNodeMap()), count)
 	buffercount(cam)
 end
 
@@ -73,7 +73,7 @@ end
 	The number of buffer underruns on the camera stream.
 """
 function bufferunderrun(cam::Camera)
-	IIntegerNode(cam, "StreamBufferUnderrunCount", nodemap = CameraTLStreamNodeMap())
+	get(SpinIntegerNode(cam, "StreamBufferUnderrunCount", CameraTLStreamNodeMap()))
 end
 
 
@@ -83,7 +83,7 @@ end
 	The number of failed (invalid) buffers on the camera stream.
 """
 function bufferfailed(cam::Camera)
-	IIntegerNode(cam, "StreamFailedBufferCount", nodemap = CameraTLStreamNodeMap())
+	get(SpinIntegerNode(cam, "StreamFailedBufferCount", CameraTLStreamNodeMap()))
 end
 
 

@@ -8,7 +8,7 @@
 
   Set automatic exposure gain on camera.
 """
-gain!(cam::Camera) = IEnumNode!(cam, "GainAuto", "Continuous")
+gain!(cam::Camera) = set!(SpinEnumNode(cam, "GainAuto"), "Continuous")
 
 """
   gain!(::Camera, ::Number) -> Float
@@ -17,8 +17,8 @@ gain!(cam::Camera) = IEnumNode!(cam, "GainAuto", "Continuous")
   range supported by camera. This function disables automatic gain.
 """
 function gain!(cam::Camera, g)
-  IEnumNode!(cam, "GainAuto", "Off")
-  IFloatNode!(cam, "Gain", g)
+  set!(SpinEnumNode(cam, "GainAuto"), "Off")
+  set!(SpinFloatNode(cam, "Gain"), g)
 end
 
 
@@ -27,11 +27,11 @@ end
 
   Return status of gamma correction
 """
-gammaenable(cam::Camera) = IBooleanNode(cam, "GammaEnable")
+gammaenable(cam::Camera) = get(SpinBooleanNode(cam, "GammaEnable"))
 
 """
   gammaenable!(::Camera, ::Bool) -> Bool
 
   Enable or disable gamma correction on camera.
 """
-gammaenable!(cam::Camera, en::Bool) = IBooleanNode(cam, "GammaEnable", en)
+gammaenable!(cam::Camera, en::Bool) = set!(SpinBooleanNode(cam, "GammaEnable"), en)
