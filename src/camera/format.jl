@@ -18,20 +18,6 @@ adcbits(cam::Camera) = IEnumNode(cam, "AdcBitDepth")
 adcbits!(cam::Camera, bits) = IEnumNode!(cam, "AdcBitDepth", bits)
 
 """
-  gammaenable(::Camera) -> Bool
-
-  Return status of gamma correction
-"""
-gammaenable(cam::Camera) = IBooleanNode(cam, "GammaEnable")
-
-"""
-  gammaenable!(::Camera, ::Bool) -> Bool
-
-  Enable or disable gamma correction on camera.
-"""
-gammaenable!(cam::Camera, en::Bool) = IBooleanNode(cam, "GammaEnable", en)
-
-"""
   pixelformat(::Camera) -> String
 
   Return camera pixel format.
