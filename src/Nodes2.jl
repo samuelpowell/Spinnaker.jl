@@ -164,6 +164,6 @@ function set!(node::SpinBooleanNode, value::Bool)
   if !writable(node.hNode)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
-  spinBooleanSetValue(hNode[], value)
-  get(node)``
+  spinBooleanSetValue(node.hNode[], value)
+  get(node)
 end

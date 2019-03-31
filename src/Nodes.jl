@@ -67,7 +67,7 @@ function IEnumNode!(cam::Camera,
                     reinit = false;
                     nodemap::AbstractNodeMap = CameraNodeMap())
   reinit && _reinit(cam)
-  set!(SpineEnumNode(cam, name, nodemap), value)
+  set!(SpinEnumNode(cam, name, nodemap), value)
 end
 
 """
@@ -146,7 +146,7 @@ function IFloatNode!(cam::Camera,
                      reinit = false;
                      nodemap::AbstractNodeMap = CameraNodeMap())
   reinit && _reinit(cam)
-  get(SpinFloatNode(cam, name, nodemap))
+  set!(SpinFloatNode(cam, name, nodemap), value)
 end
 
 """
@@ -170,6 +170,5 @@ function IBooleanNode!(cam::Camera,
                        name::String,
                        value::Bool;
                        nodemap::AbstractNodeMap = CameraNodeMap())
-  reinit && _reinit(cam)
   set!(SpinBooleanNode(cam, name, nodemap), value)
 end
