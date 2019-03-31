@@ -98,7 +98,7 @@ end
 
   Camera exposure mode.
 """
-exposure(cam::Camera) = (IFloatNode(cam, "ExposureTime"), IEnumNode(cam, "ExposureAuto"))
+exposure(cam::Camera) = (get(SpinFloatNode(cam, "ExposureTime")), get(SpinEnumNode(cam, "ExposureAuto")))
 
 
 """
@@ -127,7 +127,7 @@ end
   Camera frame rate.
 """
 function framerate(cam::Camera)
-  IFloatNode(cam, "AcquisitionFrameRate")
+  get(SpinFloatNode(cam, "AcquisitionFrameRate"))
 end
 
 

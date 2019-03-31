@@ -36,10 +36,10 @@ mutable struct Camera
     cam = new(handle)
     finalizer(_release!, cam)
     # Activate chunk mode
-    IBooleanNode!(cam, "ChunkModeActive", true)
+    set!(SpinBooleanNode(cam, "ChunkModeActive"), true)
     for chunkid in ["FrameID", "ExposureTime", "Timestamp"]
-      IEnumNode!(cam, "ChunkSelector", chunkid)
-      IBooleanNode!(cam, "ChunkEnable", true)
+      set!(SpinEnumNode(cam, "ChunkSelector"), chunkid)
+      set!(SpinBooleanNode(cam, "ChunkEnable"), true)
     end
     return cam
   end
@@ -120,14 +120,14 @@ end
 
   Return camera acquistion mode.
 """
-acquisitionmode(cam::Camera) = IEnumNode(cam, "AcquisitionMode")
+acquisitionmode(cam::Camera) = get(SpinEnumNode(cam, "AcquisitionMode"))
 
 """
   acquisitionmode!(::Camera, ::AbstractString) -> String
 
   Set camera acquistion mode, returns set mode.
 """
-acquisitionmode!(cam::Camera, mode) = IEnumNode!(cam, "AcquisitionMode", mode)
+acquisitionmode!(cam::Camera, mode) = set!(SpinEnumNode(cam, "AcquisitionMode"), mode)
 
 
 function _isimagecomplete(himage_ref)
