@@ -34,4 +34,4 @@ gammaenable(cam::Camera) = IBooleanNode(cam, "GammaEnable")
 
   Enable or disable gamma correction on camera.
 """
-gammaenable!(cam::Camera, en::Bool) = IBooleanNode(cam, "GammaEnable", en)
+gammaenable!(cam::Camera, en::Bool) = IBooleanNode!(cam, "GammaEnable", en)

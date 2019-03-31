@@ -37,7 +37,7 @@ end
 """
   triggermode(::Camera) -> String
 
-  Return if camera trigger mode.
+  Camera trigger mode.
 """
 triggermode(cam::Camera) = IEnumNode(cam, "TriggerMode")
 
@@ -94,6 +94,14 @@ end
 
 
 """
+  exposure(::Camera)
+
+  Camera exposure mode.
+"""
+exposure(cam::Camera) = (IFloatNode(cam, "ExposureTime"), IEnumNode(cam, "ExposureAuto"))
+
+
+"""
   exposure!(::Camera)
 
   Activate (continuous) automatic exposure control on specified camera.
@@ -110,6 +118,16 @@ exposure!(cam::Camera) = IEnumNode!(cam, "ExposureAuto", "Continuous")
 function exposure!(cam::Camera, t)
   IEnumNode!(cam, "ExposureAuto", "Off")
   IFloatNode!(cam, "ExposureTime", t)
+end
+
+
+"""
+  framerate(::Camera) -> Float
+
+  Camera frame rate.
+"""
+function framerate(cam::Camera)
+  IFloatNode(cam, "AcquisitionFrameRate")
 end
 
 
