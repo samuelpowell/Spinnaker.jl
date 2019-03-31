@@ -4,7 +4,7 @@
 # Node.jl: helper function to access interface to Camera nodes
 
 
-function _getnode(name::String, nodemap)
+function _getnode(cam, name::String, nodemap)
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   _nodemap!(cam, hNodeMap, nodemap) 
   hNode = Ref(spinNodeHandle(C_NULL))
@@ -21,14 +21,14 @@ abstract type AbstractSpinNode end
 struct SpinIntegerNode <: AbstractSpinNode
   name::String
   hNode::Ref{spinNodeHandle}
-  SpinIntegerNode(name::String, nodemap=CameraNodeMap()) = SpinIntegerNode(name, _getnode(name, nodemap))
+  SpinIntegerNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
 end
 
 function range(node::SpinIntegerNode)
   hMin = Ref(Int64(0.0))
   hMax = Ref(Int64(0.0))
-  spinIntegerGetMin(hNode[], hMin)
-  spinIntegerGetMax(hNode[], hMax)
+  spinIntegerGetMin(node.hNode[], hMin)
+  spinIntegerGetMax(node.hNode[], hMax)
   return (hMin[], hMax[])
 end
 
@@ -36,10 +36,10 @@ function set!(node::SpinIntegerNode, value::Number)
   if !writable(node.hNode)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
-  range = range(node)
-  value < range[1] && @warn "Requested value ($value) is smaller than minimum ($(range[1])), value will be clamped."
-  value > range[2] && @warn "Requested value ($value) is greater than minimum ($(range[2])), value will be clamped."
-  spinIntegerSetValue(node.hNode[], Int64(clamp(value, range[1], range[2])))
+  noderange = range(node)
+  value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
+  value > noderange[2] && @warn "Requested value ($value) is greater than minimum ($(noderange[2])), value will be clamped."
+  spinIntegerSetValue(node.hNode[], Int64(clamp(value, noderange[1], noderange[2])))
   get(node)  
 end
 
@@ -48,7 +48,7 @@ function get(node::SpinIntegerNode)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
   hval = Ref(Int64(0))
-  spinIntegerSetValue(node.hNode[], hval)
+  spinIntegerGetValue(node.hNode[], hval)
   return hval[]
 end
 
@@ -61,14 +61,14 @@ end
 struct SpinFloatNode <: AbstractSpinNode
   name::String
   hNode::Ref{spinNodeHandle}
-  SpinFloatNode(name::String, nodemap=CameraNodeMap()) = SpinFloatNode(name, _getnode(name, nodemap))
+  SpinFloatNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
 end
 
 function range(node::SpinFloatNode)
   hMin = Ref(Float64(0.0))
   hMax = Ref(Float64(0.0))
-  spinFloatGetMin(hNode[], hMin)
-  spinFloatGetMax(hNode[], hMax)
+  spinFloatGetMin(node.hNode[], hMin)
+  spinFloatGetMax(node.hNode[], hMax)
   return (hMin[], hMax[])
 end
 
@@ -76,10 +76,10 @@ function set!(node::SpinFloatNode, value::Number)
   if !writable(node.hNode)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
-  range = range(node)
-  value < range[1] && @warn "Requested value ($value) is smaller than minimum ($(range[1])), value will be clamped."
-  value > range[2] && @warn "Requested value ($value) is greater than minimum ($(range[2])), value will be clamped."
-  spinFloatSetValue(node.hNode[], Float64(clamp(value, range[1], range[2])))
+  noderange = range(node)
+  value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
+  value > noderange[2] && @warn "Requested value ($value) is greater than minimum ($(noderange[2])), value will be clamped."
+  spinFloatSetValue(node.hNode[], Float64(clamp(value, noderange[1], noderange[2])))
   get(node)  
 end
 
@@ -101,7 +101,7 @@ end
 struct SpinEnumNode <: AbstractSpinNode
   name::String
   hNode::Ref{spinNodeHandle}
-  SpinEnumNode(name::String, nodemap=CameraNodeMap()) = SpinEnumNode(name, _getnode(name, nodemap))
+  SpinEnumNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
 end
 
 function get(node::SpinEnumNode)
@@ -148,7 +148,7 @@ end
 struct SpinBooleanNode <: AbstractSpinNode
   name::String
   hNode::Ref{spinNodeHandle}
-  SpinBooleanNode(name::String, nodemap=CameraNodeMap()) = SpinBooleanNode(name, _getnode(name, nodemap))
+  SpinBooleanNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
 end
 
 function get(node::SpinBooleanNode)
