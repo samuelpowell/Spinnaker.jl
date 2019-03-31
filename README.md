@@ -172,18 +172,40 @@ One may directly save an acquired image to disc:
 saveimage(cam, "output.png", Spinnaker.PNG)
 ```
 
-### Buffer handling
+### Stream (buffer) handling
+
+To set the current buffer mode, 
+
+```julia
+julia> buffermode!(cam, "NewestFirst")
+"NewestFirst"
+```
+
+To set the number of buffers, and move to manual buffer count mode:
+
+```julia
+julia> buffercount!(cam, 12)
+(12, Manual)
+```
+
+To return to automatic buffer count,
+
+```julia
+julia> buffercount!(cam)
+```
+
+To check for buffer underruns, or invalid buffer frames:
+
+```julia
+julia> bufferunderrun(camera)
+0
+
+julia> bufferfailed(camera)
+0
+```
 
 Please note the [specifics](https://www.ptgrey.com/tan/11174) of buffer handling to 
 understand the expected behaviour of the various buffer modes.
-
-To determine the current buffer mode, 
-
-```julia
-julia> buffermode(cam)
-
-TODO:
-```
 
 
 ### Demo
