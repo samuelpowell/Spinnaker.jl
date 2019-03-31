@@ -30,13 +30,35 @@ function writable(nodeName)
  end
 end
 
-function _getTLNodeString(cam::Camera, nodename::AbstractString)
-  hNodeMapTLDevice = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetTLDeviceNodeMap(cam, hNodeMapTLDevice)
+# Node maps
 
+abstract type AbstractNodeMap end
+
+struct CameraNodeMap <: AbstractNodeMap end
+function _nodemap!(cam, hNodeMap, nm::CameraNodeMap) 
+  spinCameraGetNodeMap(cam, hNodeMap)
+end
+
+struct CameraTLDeviceNodeMap <: AbstractNodeMap end
+function _nodemap!(cam, hNodeMap, nm::CameraTLDeviceNodeMap)
+  spinCameraGetTLDeviceNodeMap(cam, hNodeMap)
+end
+
+struct CameraTLStreamNodeMap <: AbstractNodeMap end
+function _nodemap!(cam, hNodeMap, nm::CameraTLStreamNodeMap)
+  spinCameraGetTLStreamNodeMap(cam, hNodeMap)
+end
+
+function GetStringNode(cam::Camera,
+                       name::AbstractString;
+                       nodemap::AbstractNodeMap = CameraNodeMap())
+
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  _nodemap!(cam, hNodeMap, CameraTLDeviceNodeMap())
+  
   #  Get camera vendor name
   hNode = Ref(spinNodeHandle(C_NULL))
-  spinNodeMapGetNode(hNodeMapTLDevice[], nodename, hNode)
+  spinNodeMapGetNode(hNodeMap[], name, hNode)
   nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
   nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
   if readable(hNode)
@@ -60,7 +82,8 @@ end
 function IEnumNode!(cam::Camera,
                     name::AbstractString,
                     value::AbstractString,
-                    reinit = false)
+                    reinit = false;
+                    nodemap::AbstractNodeMap = CameraNodeMap())
 
    reinit && _reinit(cam)
 
@@ -105,7 +128,8 @@ end
 """
 function IEnumNode(cam::Camera,
                    name::AbstractString,
-                   reinit = false)
+                   reinit = false;
+                   nodemap::AbstractNodeMap = CameraNodeMap())
 
    reinit && _reinit(cam)
 
@@ -137,7 +161,8 @@ end
 """
 function IFloatNode(cam::Camera,
                     name::AbstractString,
-                    reinit = false)
+                    reinit = false;
+                    nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
@@ -161,7 +186,9 @@ end
 
   Return range of floating point node.
 """
-function IFloatNodeRange(cam::Camera, name::String)
+function IFloatNodeRange(cam::Camera,
+                         name::String;
+                         nodemap::AbstractNodeMap = CameraNodeMap())
 
     hNodeMap = Ref(spinNodeMapHandle(C_NULL))
     spinCameraGetNodeMap(cam, hNodeMap)
@@ -194,7 +221,8 @@ end
 function IFloatNode!(cam::Camera,
                      name::AbstractString,
                      value::Number,
-                     reinit = false)
+                     reinit = false;
+                     nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
@@ -220,7 +248,9 @@ end
 
   Return value of boolean node.
 """
-function IBooleanNode(cam::Camera, name::String)
+function IBooleanNode(cam::Camera,
+                      name::String;
+                      nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
@@ -245,7 +275,10 @@ end
 
   Return value of boolean node.
 """
-function IBooleanNode(cam::Camera, name::String, value::Bool)
+function IBooleanNode(cam::Camera,
+                      name::String,
+                      value::Bool;
+                      nodemap::AbstractNodeMap = CameraNodeMap())
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
