@@ -336,6 +336,7 @@ end
 
   Return value of boolean node.
 """
+
 function IBooleanNode!(cam::Camera,
                        name::String,
                        value::Bool;
