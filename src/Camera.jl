@@ -1,5 +1,5 @@
 # Spinnaker.jl: wrapper for FLIR/Point Grey Spinnaker SDK
-# Copyright (C) 2018 Samuel Powell
+# Copyright (C) 2019 Samuel Powell
 
 # Camera.jl: interface to Camera objects
 export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, saveimage,
