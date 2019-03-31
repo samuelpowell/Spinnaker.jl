@@ -12,7 +12,8 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        adcbits, adcbits!,
        gammaenable!,
        pixelformat, pixelformat!,
-       acqusitionmode, acquisitionmode!
+       acqusitionmode, acquisitionmode!,
+       buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed
 
 """
  Spinnaker SDK Camera object
@@ -64,6 +65,7 @@ end
 include(joinpath("camera", "acquisition.jl"))
 include(joinpath("camera", "analog.jl"))
 include(joinpath("camera", "format.jl"))
+include(joinpath("camera", "stream.jl"))
 
 #
 # Device metadata
@@ -74,21 +76,21 @@ include(joinpath("camera", "format.jl"))
 
   Return camera serial number (string)
 """
-serial(cam::Camera) = _getTLNodeString(cam, "DeviceSerialNumber")
+serial(cam::Camera) = GetStringNode(cam, "DeviceSerialNumber", nodemap=CameraTLDeviceNodeMap())
 
 """
   vendor(::Camera) -> String
 
   Return vendor name of specified camera.
 """
-vendor(cam::Camera) = _getTLNodeString(cam, "DeviceVendorName")
+vendor(cam::Camera) = GetStringNode(cam, "DeviceVendorName", nodemap=CameraTLDeviceNodeMap())
 
 """
   model(::Camera) -> String
 
   Return model name of specified camera.
 """
-model(cam::Camera) = _getTLNodeString(cam, "DeviceModelName")
+model(cam::Camera) = GetStringNode(cam, "DeviceModelName", nodemap=CameraTLDeviceNodeMap())
 
 """
   show(::IO, ::Camera)
