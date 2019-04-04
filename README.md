@@ -280,7 +280,4 @@ The operation of this package revolves around the manipulation of [nodes](https:
 an XML file). Nodes exist as part of a node map, of which there are several: the 
 camera node map controls camera features; the stream node map controls image buffers; and the transport node map controls the speciifc transport layer of the device. Nodes values by
 be integer valued, floating point valued, an enumeration, etc. Node operations are
-currently defined in the `Node.jl` source file. Future development could refine this
-interface, inlclud a significant reduction in code duplication, by introducing a node type
-which, alongside the nodemap types introduced recently, would allow dispatch to implement
-the appropriate actions.
+currently defined in the `Node.jl` source file. 
