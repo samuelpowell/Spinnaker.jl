@@ -20,7 +20,7 @@ Ensure that the Spinnaker SDK is installed, then use the Julia package manage to
 install and build the package.
 
 ```Julia
-]add https://github.com/samuelpowell/Spinnaker.jl#master
+]add Spinnaker
 ```
 
 ## High-level Interface
