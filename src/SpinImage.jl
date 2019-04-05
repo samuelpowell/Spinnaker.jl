@@ -128,7 +128,7 @@ end
 """
 function timestamp(image::SpinImage)
     timestamp_ref = Ref(Int64(0))
-    spinImageChunkDataGetIntValue(hImage, "ChunkTimestamp", timestamp_ref)
+    spinImageChunkDataGetIntValue(image, "ChunkTimestamp", timestamp_ref)
     return timestamp_ref[]
 end
 
@@ -139,7 +139,7 @@ end
 """
 function id(image::SpinImage)
     id_ref = Ref(Int64(0))
-    spinImageChunkDataGetIntValue(hImage, "ChunkFrameID", id_ref);
+    spinImageChunkDataGetIntValue(image, "ChunkFrameID", id_ref);
     return id_ref[]
 end
 

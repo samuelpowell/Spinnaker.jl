@@ -271,13 +271,24 @@ julia> stop!(cam)
 FLIR Blackfly S BFS-U3-16S2M (XXXXXXXX)
 ```
 
+## Low-level Interface
 
-## Implementation and development
+The operation of this package revolves around the manipulation of [nodes](https://www.ptgrey.com/tan/11153) defined by a camera specification. Nodes exist as part of a node map, of which there are several: the camera node map controls camera features; the stream node map controls image buffers; and the transport node map controls the specific transport layer of the device. Nodes may be integer valued, floating point valued, an enumeration, etc. 
 
-### Nodes
+In Spinnaker.jl, node access functions are provided which allow manipulation through their textual names (rather than integer identifiers). For example, a nodes can be written to using the `set!`function:
 
-The operation of this package revolves around the manipulation of [nodes](https://www.ptgrey.com/tan/11153) defined by a camera specification (typically provided as 
-an XML file). Nodes exist as part of a node map, of which there are several: the 
-camera node map controls camera features; the stream node map controls image buffers; and the transport node map controls the speciifc transport layer of the device. Nodes values by
-be integer valued, floating point valued, an enumeration, etc. Node operations are
-currently defined in the `Node.jl` source file. 
+```julia
+julia> Spinnaker.set!(Spinnaker.SpinEnumNode(cam, "TriggerSelector"), "FrameStart")
+"FrameStart"
+```
+
+This command creates a reference to an enumeration valued node with name `TriggerSelector`, and sets the value to the named enumeration element `FrameStart`. By default, nodes refer to the _camera_ node map. To access a different node map, pass the appropriate singleton type to the node constructor:
+
+```julia
+julia> get(SpinEnumNode(cam, "StreamBufferHandlingMode", CameraTLStreamNodeMap()))
+"NewestFirst"
+```
+
+This command creates a reference to the enumeration valued node with the name `StreamBufferHandlingMode` in the _transport steram node map_, and returns the current enuemration selection by its string representation. The available node maps are `CameraNodeMap`, `CameraTLStreamNodeMap`, and `CameraTLDeviceNodeMap`. Node types are defined for enumerations (`SpinEnumNode`), floating point values (`SpinFloatNode`), booleans (`SpinBoolNode`), and integers (`SpinIntegerNode`). Set operations on numeric node types are clamped to the range of the node, and a warning is printed if the desired setting is out of range.
+
+The majority of the high level interface is defined by convenience functions which safely or logically manipualte camera nodes. If you frequently require access to specific nodes, consider creating a high level convenience function for this action, and submitting a PR.
