@@ -123,6 +123,8 @@ Images can be retrieved in three formats:
  - Array, a raw Julia array of arbitrary type, with metadata returned as additional return values;
  - SpinImage, an internal Spinnaker library image type, which can be queried for metadata.
 
+**The native camera format for images is row-major**, to avoid performing a transposition this means that the resulting Julia matrices are of dimensions (width x height), which is transposed compared to the normal (height x width) arrangement in a column-major language such as Julia or MATLAB. Perform a transposition if this is problematic.
+
 #### CameraImage
 
 If the pixel format from the camera is _unpacked_ Images can be retrieved to a `CameraImage` type which provides an `AbstractArray` interface to the underlying data, in addition to storing metadata available when the image is acquired. One can acquire an image
