@@ -1,0 +1,9 @@
+name = "Spinnaker"
+uuid = "8e0d2ad3-56b8-53f3-8036-54b674872bef"
+
+[compat]
+julia = "≥ 0.7.0"
+
+[deps]
+FixedPointNumbers = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
