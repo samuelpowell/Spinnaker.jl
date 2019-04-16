@@ -87,21 +87,21 @@ include(joinpath("camera", "stream.jl"))
 
   Return camera serial number (string)
 """
-serial(cam::Camera) = GetStringNode(cam, "DeviceSerialNumber", nodemap=CameraTLDeviceNodeMap())
+serial(cam::Camera) = get(SpinStringNode(cam, "DeviceSerialNumber", CameraTLDeviceNodeMap()))
 
 """
   vendor(::Camera) -> String
 
   Return vendor name of specified camera.
 """
-vendor(cam::Camera) = GetStringNode(cam, "DeviceVendorName", nodemap=CameraTLDeviceNodeMap())
+vendor(cam::Camera) = get(SpinStringNode(cam, "DeviceVendorName", CameraTLDeviceNodeMap()))
 
 """
   model(::Camera) -> String
 
   Return model name of specified camera.
 """
-model(cam::Camera) = GetStringNode(cam, "DeviceModelName", nodemap=CameraTLDeviceNodeMap())
+model(cam::Camera) = get(SpinStringNode(cam, "DeviceModelName", CameraTLDeviceNodeMap()))
 
 """
   show(::IO, ::Camera)
