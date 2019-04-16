@@ -1,5 +1,5 @@
 # Spinnaker.jl: wrapper for FLIR/Point Grey Spinnaker SDK
-# Copyright (C) 2018 Samuel Powell
+# Copyright (C) 2019 Samuel Powell
 
 # Node.jl: helper function to access interface to Camera nodes
 
@@ -30,13 +30,17 @@ function writable(nodeName)
  end
 end
 
-function _getTLNodeString(cam::Camera, nodename::AbstractString)
-  hNodeMapTLDevice = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetTLDeviceNodeMap(cam, hNodeMapTLDevice)
+# Node maps
+function GetStringNode(cam::Camera,
+                       name::AbstractString;
+                       nodemap::AbstractNodeMap = CameraNodeMap())
 
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  _nodemap!(cam, hNodeMap, nodemap)
+  
   #  Get camera vendor name
   hNode = Ref(spinNodeHandle(C_NULL))
-  spinNodeMapGetNode(hNodeMapTLDevice[], nodename, hNode)
+  spinNodeMapGetNode(hNodeMap[], name, hNode)
   nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
   nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
   if readable(hNode)
@@ -50,218 +54,167 @@ function _getTLNodeString(cam::Camera, nodename::AbstractString)
   return nodestring
 end
 
-"""
-  IEnumNode!(::Cam, name::String, value::String, reinit=false) -> String
 
-  Set the enumeration node `name` to `value` on specified camera. If `reinit` is
-  true, the camera is deinitialised and reinitialised prior to node access. The
-  actual value is read back and returned.
-"""
-function IEnumNode!(cam::Camera,
-                    name::AbstractString,
-                    value::AbstractString,
-                    reinit = false)
-
-   reinit && _reinit(cam)
-
-   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-   spinCameraGetNodeMap(cam, hNodeMap)
-
-   # Get the enumeration node
-   hNode = Ref(spinNodeHandle(C_NULL))
-   spinNodeMapGetNode(hNodeMap[], name, hNode);
-
-   # Get enumeration entry
-   if !readable(hNode)
-     throw(ErrorException("Node $name is not readable"))
-   end
-   hNodeEntry = Ref(spinNodeHandle(C_NULL))
-   hNodeVal = Ref(Int64(0))
-   spinEnumerationGetEntryByName(hNode[], value, hNodeEntry)
-
-   # Get integer value from string
-   if !readable(hNodeEntry)
-     throw(ErrorException("Node $name entry is not readable"))
-   end
-   spinEnumerationEntryGetIntValue(hNodeEntry[], hNodeVal)
-
-   # Set value
-   if !writable(hNode)
-     throw(ErrorException("Node $name is not writable"))
-   end
-   spinEnumerationSetIntValue(hNode[], hNodeVal[])
-
-   # Readback
-   return IEnumNode(cam, name)
-
-end
-
-"""
-  IEnumNode(::Cam, name::String, reinit=false) -> String
-
-  Retrieve the enumeration node `name` to `value` on specified camera. If
-  `reinit` is true, the camera is deinitialised and reinitialised prior to node
-  access.
-"""
-function IEnumNode(cam::Camera,
-                   name::AbstractString,
-                   reinit = false)
-
-   reinit && _reinit(cam)
-
-   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-   spinCameraGetNodeMap(cam, hNodeMap)
-
-   hNode = Ref(spinNodeHandle(C_NULL))
-   spinNodeMapGetNode(hNodeMap[], name, hNode);
-   if !readable(hNode)
-     throw(ErrorException("Node $name is not readable"))
-   end
-
-   hNodeEntry = Ref(spinNodeHandle(C_NULL))
-   strbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
-   strlen = Ref(Csize_t(MAX_BUFFER_LEN))
-
-   spinEnumerationGetCurrentEntry(hNode[], hNodeEntry)
-   spinEnumerationEntryGetSymbolic(hNodeEntry[], strbuf, strlen)
-
-   return unsafe_string(pointer(strbuf))
-
-end
-
-"""
-  IFloatNode(::Cam, name::String, reinit=false) -> Float64
-
-  Retrieve the float node `name` to `value` on specified camera. If `reinit` is
-  true, the camera is deinitialised and reinitialised prior to node access.
-"""
-function IFloatNode!(cam::Camera,
-                     name::AbstractString,
-                     reinit = false)
-
+function _getnode(cam, name::String, nodemap)
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetNodeMap(cam, hNodeMap)
-
-  # Set manual exposure time
+  _nodemap!(cam, hNodeMap, nodemap) 
   hNode = Ref(spinNodeHandle(C_NULL))
   spinNodeMapGetNode(hNodeMap[], name, hNode);
-  if !readable(hNode)
-    throw(ErrorException("Node $name is not readable"))
+  return hNode
+end
+
+abstract type AbstractSpinNode end
+
+#
+# Integer nodes
+#
+
+struct SpinIntegerNode <: AbstractSpinNode
+  name::String
+  hNode::Ref{spinNodeHandle}
+  SpinIntegerNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
+end
+
+function range(node::SpinIntegerNode)
+  hMin = Ref(Int64(0.0))
+  hMax = Ref(Int64(0.0))
+  spinIntegerGetMin(node.hNode[], hMin)
+  spinIntegerGetMax(node.hNode[], hMax)
+  return (hMin[], hMax[])
+end
+
+function set!(node::SpinIntegerNode, value::Number)
+  if !writable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not writable"))
   end
-
-  hsetvalue = Ref(Float64(0.0))
-  spinFloatGetValue(hNode[], hsetvalue)
-  return hsetvalue[]
-
+  noderange = range(node)
+  value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
+  value > noderange[2] && @warn "Requested value ($value) is greater than minimum ($(noderange[2])), value will be clamped."
+  spinIntegerSetValue(node.hNode[], Int64(clamp(value, noderange[1], noderange[2])))
+  get(node)  
 end
 
-
-"""
-  IFloatNodeRange(::Cam, name::AbstractString) -> (min, max)
-
-  Return range of floating point node.
-"""
-function IFloatNodeRange(cam::Camera, name::String)
-
-    hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-    spinCameraGetNodeMap(cam, hNodeMap)
-
-    # Set manual exposure time
-    hNode = Ref(spinNodeHandle(C_NULL))
-    hvalmin = Ref(Float64(0.0))
-    hvalmax = Ref(Float64(0.0))
-
-    spinNodeMapGetNode(hNodeMap[], name, hNode);
-    if !readable(hNode)
-      throw(ErrorException("Node $name is not readable"))
-    end
-    spinFloatGetMin(hNode[], hvalmin)
-    spinFloatGetMax(hNode[], hvalmax)
-
-    return (hvalmin[], hvalmax[])
-
-end
-
-
-"""
-  IFloatNode!(::Cam, name::String, value::Number, reinit=false) -> Float64
-
-  Set the float node `name` to `value` on specified camera. If `reinit` is
-  true, the camera is deinitialised and reinitialised prior to node access. The
-  value is clamped to the allowable range, and the actual value is read back
-  and returned.
-"""
-function IFloatNode!(cam::Camera,
-                     name::AbstractString,
-                     value::Number,
-                     reinit = false)
-
-  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetNodeMap(cam, hNodeMap)
-
-  # Get node
-  hNode = Ref(spinNodeHandle(C_NULL))
-  hsetvalue = Ref(Float64(0.0))
-  spinNodeMapGetNode(hNodeMap[], name, hNode);
-
-  # Clamp and set range
-  if !writable(hNode)
-    throw(ErrorException("Node $name is not writable"))
+function get(node::SpinIntegerNode)
+  if !readable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not readable"))
   end
-  spinFloatSetValue(hNode[], Float64(clamp(value, IFloatNodeRange(cam, name)...)))
-  spinFloatGetValue(hNode[], hsetvalue)
-
-  return hsetvalue[]
-
+  hval = Ref(Int64(0))
+  spinIntegerGetValue(node.hNode[], hval)
+  return hval[]
 end
 
-"""
-  IBooleanNode(::Cam, name::String) -> Bool
 
-  Return value of boolean node.
-"""
-function IBooleanNode(cam::Camera, name::String)
 
-  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetNodeMap(cam, hNodeMap)
+#
+# Floating point nodes
+#
 
-  # Get node
-  hNode = Ref(spinNodeHandle(C_NULL))
+struct SpinFloatNode <: AbstractSpinNode
+  name::String
+  hNode::Ref{spinNodeHandle}
+  SpinFloatNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
+end
+
+function range(node::SpinFloatNode)
+  hMin = Ref(Float64(0.0))
+  hMax = Ref(Float64(0.0))
+  spinFloatGetMin(node.hNode[], hMin)
+  spinFloatGetMax(node.hNode[], hMax)
+  return (hMin[], hMax[])
+end
+
+function set!(node::SpinFloatNode, value::Number)
+  if !writable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not writable"))
+  end
+  noderange = range(node)
+  value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
+  value > noderange[2] && @warn "Requested value ($value) is greater than minimum ($(noderange[2])), value will be clamped."
+  spinFloatSetValue(node.hNode[], Float64(clamp(value, noderange[1], noderange[2])))
+  get(node)  
+end
+
+function get(node::SpinFloatNode)
+  if !readable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not readable"))
+  end
+  hval = Ref(Float64(0))
+  spinFloatGetValue(node.hNode[], hval)
+  return hval[]
+end
+
+
+
+#
+# Integer enumeration nodes 
+#
+
+struct SpinEnumNode <: AbstractSpinNode
+  name::String
+  hNode::Ref{spinNodeHandle}
+  SpinEnumNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
+end
+
+function get(node::SpinEnumNode)
+  if !readable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not readable"))
+  end
+  hNodeEntry = Ref(spinNodeHandle(C_NULL))
+  strbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
+  strlen = Ref(Csize_t(MAX_BUFFER_LEN))
+  spinEnumerationGetCurrentEntry(node.hNode[], hNodeEntry)
+  spinEnumerationEntryGetSymbolic(hNodeEntry[], strbuf, strlen)
+  return unsafe_string(pointer(strbuf))
+end
+
+function set!(node::SpinEnumNode, value)
+  if !readable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not readable"))
+  end
+  hNodeEntry = Ref(spinNodeHandle(C_NULL))
+  hNodeVal = Ref(Int64(0))
+  spinEnumerationGetEntryByName(node.hNode[], value, hNodeEntry)
+
+  # Get integer value from string
+  if !readable(hNodeEntry)
+    throw(ErrorException("Node $(node.name) entry is not readable"))
+  end
+  spinEnumerationEntryGetIntValue(hNodeEntry[], hNodeVal)
+
+  # Set value
+  if !writable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not writable"))
+  end
+  spinEnumerationSetIntValue(node.hNode[], hNodeVal[])
+
+  # Readback
+  get(node)
+end
+
+
+#
+# Boolean mnodes
+#
+
+struct SpinBooleanNode <: AbstractSpinNode
+  name::String
+  hNode::Ref{spinNodeHandle}
+  SpinBooleanNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
+end
+
+function get(node::SpinBooleanNode)
+  if !readable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not readable"))
+  end
   hval = Ref(bool8_t(0))
-  spinNodeMapGetNode(hNodeMap[], name, hNode);
-  if !readable(hNode)
-    throw(ErrorException("Node $name is not readable"))
-  end
-
-  # Get and return value
-  spinBooleanGetValue(hNode[], hval)
-
+  spinBooleanGetValue(node.hNode[], hval)
   return hval[] == 1 ? true : false
-
 end
 
-"""
-  IBooleanNode!(::Cam, name::String, value::Bool) -> Bool
-
-  Return value of boolean node.
-"""
-function IBooleanNode(cam::Camera, name::String, value::Bool)
-
-  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  spinCameraGetNodeMap(cam, hNodeMap)
-
-  # Get node
-  hNode = Ref(spinNodeHandle(C_NULL))
-  hval = Ref(bool8_t(0))
-  spinNodeMapGetNode(hNodeMap[], name, hNode);
-  if !writable(hNode)
-    throw(ErrorException("Node $name is not writable"))
+function set!(node::SpinBooleanNode, value::Bool)
+  if !writable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not writable"))
   end
-
-  # Get and return value
-  spinBooleanSetValue(hNode[], value)
-  spinBooleanGetValue(hNode[], hval)
-
-  return hval[] == 1 ? true : false
-
+  spinBooleanSetValue(node.hNode[], value)
+  get(node)
 end

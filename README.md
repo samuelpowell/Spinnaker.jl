@@ -20,7 +20,7 @@ Ensure that the Spinnaker SDK is installed, then use the Julia package manage to
 install and build the package.
 
 ```Julia
-]add https://github.com/samuelpowell/Spinnaker.jl#master
+]add Spinnaker
 ```
 
 ## High-level Interface
@@ -103,12 +103,29 @@ julia> adcbits!(cam, "Bit12")
 "Bit12"
 ```
 
-See `gammaenable(!)`, `pixelformat(!)`, `adcbits(!)`
+Set the image size and offset:
+```julia
+julia> imagedims!(cam, (1024, 1024))
+(1024, 1024)
+
+julia> offsetdims!(cam, (0,10))
+(0, 10)
+```
+
+See `gammaenable(!)`, `pixelformat(!)`, `adcbits(!)`, `sensordims`, `imagedims(!)`, `offsetdims(!)`.
 
 ### Retrieving images
 
-All of the following functions are blocking, and execution will halt until an
-image is available.
+All of the following functions are blocking, and execution will halt until an image is available. For each function the keyword argument `release=true` is supported which by default will release the buffer for further use. If you choose `release=false` then the buffer will not be released, allowing one to inspect the image without removing it from the stream buffer (e.g the next call to the function will return the same image).
+
+Images can be retrieved in three formats:
+ - CameraImage, an abstract array interface of arbitrary type, which stores metadata about the image;
+ - Array, a raw Julia array of arbitrary type, with metadata returned as additional return values;
+ - SpinImage, an internal Spinnaker library image type, which can be queried for metadata.
+
+**The native camera format for images is row-major**, to avoid performing a transposition this means that the resulting Julia matrices are of dimensions (width x height), which is transposed compared to the normal (height x width) arrangement in a column-major language such as Julia or MATLAB. Perform a transposition if this is problematic.
+
+#### CameraImage
 
 If the pixel format from the camera is _unpacked_ Images can be retrieved to a `CameraImage` type which provides an `AbstractArray` interface to the underlying data, in addition to storing metadata available when the image is acquired. One can acquire an image
 in this way by specifying the desired data format:
@@ -123,16 +140,34 @@ julia> getimage(cam, Float64, normalize=false)
 By specifying `normalize=true` the image data from the camera is intepreted as a
 fixed point number in the range [0,1]. By combining this with a fixed point Colorant type `Gray{N0f8}`, this provides direct compatibilty with the Julia images stack. Alterantively, without normalisation the unsigned integer data returned from the camera will be supplied in its natural range, e.g., a Mono8 pixel format will result in values in the range [0, 255].
 
-Mutating versions are available, where the type is determined from the input.
-If the input type is a `CameraImage` the metadata will be updated and the underlying data array reused. Alternatively if this is a raw Julia array, only the
-data will be updated:
+Mutating versions are available, where the type is determined from the input, the metadata will be updated and the underlying data array reused. 
 
 ```julia
 julia> getimage!(cam, cameraimage);
-julia> getimage!(cam, Array{Float64}(undef, width, height))
-1440×1080 Array{Float32,2}:
- 99.0  93.0  90.0  91.0  84.0  92.0   92.0  99.0  …  84.0  79.0  85.0  81.0  82.0  
+1440×1080 CameraImage{Float64,2}:
+ 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0 
 ```
+
+Metadata such as the id, timestamp, and exposure can be returned from the CameraImage:
+
+```julia
+julia> id(getimage(camera, Float64))
+391050
+
+julia> id(getimage(camera, Float64))
+391051
+```
+
+#### Array
+
+A raw Julia array can be passed to the mutating form `getimage!`, which operates in the same way as the method which accepts the CameraImage format, however the metadata will be returned by the function:
+
+```julia
+julia> imid, imtimestamp, imexposure = getimage!(camera, Array{Float64}(undef, 1440, 1080))
+(391055, 20685632735104, 14996.0)
+```
+
+#### SpinImage
 
 Alternatively, a `SpinImage` type can be retrieved from the camera, which supports all
 possible pixel formats, including packed data. To copy the image from the camera buffer, and release the buffer for acquisition:
@@ -172,6 +207,40 @@ One may directly save an acquired image to disc:
 saveimage(cam, "output.png", Spinnaker.PNG)
 ```
 
+### Stream (buffer) handling
+
+To set the current buffer mode, 
+
+```julia
+julia> buffermode!(cam, "NewestFirst")
+"NewestFirst"
+```
+
+To set the number of buffers, and move to manual buffer count mode:
+
+```julia
+julia> buffercount!(cam, 12)
+(12, Manual)
+```
+
+To return to automatic buffer count,
+
+```julia
+julia> buffercount!(cam)
+```
+
+To check for buffer underruns, or invalid buffer frames:
+
+```julia
+julia> bufferunderrun(camera)
+0
+
+julia> bufferfailed(camera)
+0
+```
+
+Please note the [specifics](https://www.ptgrey.com/tan/11174) of buffer handling to 
+understand the expected behaviour of the various buffer modes.
 
 
 ### Demo
@@ -203,3 +272,25 @@ julia> saveimage(cam, joinpath(@__DIR__, "test.png"), spinImageFileFormat(6))
 julia> stop!(cam)
 FLIR Blackfly S BFS-U3-16S2M (XXXXXXXX)
 ```
+
+## Low-level Interface
+
+The operation of this package revolves around the manipulation of [nodes](https://www.ptgrey.com/tan/11153) defined by a camera specification. Nodes exist as part of a node map, of which there are several: the camera node map controls camera features; the stream node map controls image buffers; and the transport node map controls the specific transport layer of the device. Nodes may be integer valued, floating point valued, an enumeration, etc. 
+
+In Spinnaker.jl, node access functions are provided which allow manipulation through their textual names (rather than integer identifiers). For example, a nodes can be written to using the `set!`function:
+
+```julia
+julia> Spinnaker.set!(Spinnaker.SpinEnumNode(cam, "TriggerSelector"), "FrameStart")
+"FrameStart"
+```
+
+This command creates a reference to an enumeration valued node with name `TriggerSelector`, and sets the value to the named enumeration element `FrameStart`. By default, nodes refer to the _camera_ node map. To access a different node map, pass the appropriate singleton type to the node constructor:
+
+```julia
+julia> get(SpinEnumNode(cam, "StreamBufferHandlingMode", CameraTLStreamNodeMap()))
+"NewestFirst"
+```
+
+This command creates a reference to the enumeration valued node with the name `StreamBufferHandlingMode` in the _transport steram node map_, and returns the current enuemration selection by its string representation. The available node maps are `CameraNodeMap`, `CameraTLStreamNodeMap`, and `CameraTLDeviceNodeMap`. Node types are defined for enumerations (`SpinEnumNode`), floating point values (`SpinFloatNode`), booleans (`SpinBoolNode`), and integers (`SpinIntegerNode`). Set operations on numeric node types are clamped to the range of the node, and a warning is printed if the desired setting is out of range.
+
+The majority of the high level interface is defined by convenience functions which safely or logically manipualte camera nodes. If you frequently require access to specific nodes, consider creating a high level convenience function for this action, and submitting a PR.

@@ -1,12 +1,12 @@
 # Spinnaker.jl: wrapper for FLIR/Point Grey Spinnaker SDK
-# Copyright (C) 2018 Samuel Powell
+# Copyright (C) 2019 Samuel Powell
 
 module Spinnaker
 
 using FixedPointNumbers
 
 import Libdl
-import Base: unsafe_convert, show, length, getindex, size, convert
+import Base: unsafe_convert, show, length, getindex, size, convert, range
 
 export System, Camera, CameraList
 
@@ -47,6 +47,7 @@ include("CameraImage.jl")
 include("System.jl")
 include("Camera.jl")
 include("CameraList.jl")
+include("NodeMap.jl")
 include("Nodes.jl")
 
 # Create a System object at runtime

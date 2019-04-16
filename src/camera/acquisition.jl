@@ -1,5 +1,5 @@
 # Spinnaker.jl: wrapper for FLIR/Point Grey Spinnaker SDK
-# Copyright (C) 2018 Samuel Powell
+# Copyright (C) 2019 Samuel Powell
 
 # camera/acquisition.jl: Camera object acquistion features
 
@@ -61,16 +61,16 @@ streambufferhandlingmode!(cam::Camera, mode) = IEnumNode!(cam, "StreamBufferHand
 """
   triggermode(::Camera) -> String
 
-  Return if camera trigger mode.
+  Camera trigger mode.
 """
-triggermode(cam::Camera) = IEnumNode(cam, "TriggerMode")
+triggermode(cam::Camera) = get(SpinEnumNode(cam, "TriggerMode"))
 
 """
   triggermode!(::Camera, ::String) -> String
 
   Set camera trigger mode, returns set mode.
 """
-triggermode!(cam::Camera, mode) = IEnumNode!(cam, "TriggerMode", mode)
+triggermode!(cam::Camera, mode) = set!(SpinEnumNode(cam, "TriggerMode"), mode)
 
 """
   triggersource!(::Camera, ::AbstractString) -> String
@@ -80,7 +80,7 @@ triggermode!(cam::Camera, mode) = IEnumNode!(cam, "TriggerMode", mode)
 """
 function triggersource!(cam::Camera, src)
   initmode = triggermode(cam)   # Save current trigger mode
-  setsrc = IEnumNode!(cam, "TriggerSource", src)
+  setsrc = set!(SpinEnumNode(cam, "TriggerSource"), src)
   triggermode!(cam, initmode)   # Restore initial trigger mode
   return setsrc
 end
@@ -90,7 +90,7 @@ end
 
   Return current camera trigger source.
 """
-triggersource(cam::Camera) = IEnumNode(cam, "TriggerSource")
+triggersource(cam::Camera) = get(SpinEnumNode(cam, "TriggerSource"))
 
 """
   trigger!(::Camera)
@@ -118,11 +118,19 @@ end
 
 
 """
+  exposure(::Camera)
+
+  Camera exposure mode.
+"""
+exposure(cam::Camera) = (get(SpinFloatNode(cam, "ExposureTime")), get(SpinEnumNode(cam, "ExposureAuto")))
+
+
+"""
   exposure!(::Camera)
 
   Activate (continuous) automatic exposure control on specified camera.
 """
-exposure!(cam::Camera) = IEnumNode!(cam, "ExposureAuto", "Continuous")
+exposure!(cam::Camera) = set!(SpinEnumNode(cam, "ExposureAuto"), "Continuous")
 
 """
   exposure!(::Camera, ::Number) -> Float
@@ -132,8 +140,18 @@ exposure!(cam::Camera) = IEnumNode!(cam, "ExposureAuto", "Continuous")
   is returned. This function disables automatic exposure.
 """
 function exposure!(cam::Camera, t)
-  IEnumNode!(cam, "ExposureAuto", "Off")
-  IFloatNode!(cam, "ExposureTime", t)
+  set!(SpinEnumNode(cam, "ExposureAuto"), "Off")
+  set!(SpinFloatNode(cam, "ExposureTime"), t)
+end
+
+
+"""
+  framerate(::Camera) -> Float
+
+  Camera frame rate.
+"""
+function framerate(cam::Camera)
+  get(SpinFloatNode(cam, "AcquisitionFrameRate"))
 end
 
 
@@ -145,5 +163,5 @@ end
   is returned.
 """
 function framerate!(cam::Camera, fps)
-  IFloatNode!(cam, "AcquisitionFrameRate", fps)
+  set!(SpinFloatNode(cam, "AcquisitionFrameRate"), fps)
 end
