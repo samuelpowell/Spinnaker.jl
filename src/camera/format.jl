@@ -36,7 +36,7 @@ pixelformat!(cam::Camera, fmt) = set!(SpinEnumNode(cam, "PixelFormat"), fmt)
 
   Return the width and height of the sensor.
 """
-sensordims(cam::Camera) = (get(SpinIntegerNode(cam, "SensorWidth")), get(SpinIntegerNode(cam, "SensorWidth")))
+sensordims(cam::Camera) = (get(SpinIntegerNode(cam, "SensorWidth")), get(SpinIntegerNode(cam, "SensorHeight")))
 
 
 """
@@ -45,7 +45,6 @@ sensordims(cam::Camera) = (get(SpinIntegerNode(cam, "SensorWidth")), get(SpinInt
   Return the width and height of the image.
 """
 imagedims(cam::Camera) = (get(SpinIntegerNode(cam, "Width")), get(SpinIntegerNode(cam, "Height")))
-  
 
 """
   imagedims!(::Camera, (width, height)) -> (Int, Int)
@@ -57,6 +56,13 @@ function imagedims!(cam::Camera, dims)
   set!(SpinIntegerNode(cam, "Height"), dims[2])
   imagedims(cam)
 end
+
+"""
+  imagedims_limits(::Camera) -> ((Int, Int), (Int, Int))
+
+  Image dimension limits in width, and height.
+"""
+imagedims_limits(cam::Camera) = (range(SpinIntegerNode(cam, "Width")), range(SpinIntegerNode(cam, "Height")))
 
 """
   offsetdims(::Camera) -> (Int, Int)
@@ -76,3 +82,9 @@ function offsetdims!(cam::Camera, dims)
   offsetdims(cam)
 end
   
+"""
+  offsetdims_limits(::Camera) -> ((Int, Int), (Int, Int))
+
+  Image offsets limits in width, and height.
+"""
+offsetdims_limits(cam::Camera) = (range(SpinIntegerNode(cam, "OffsetX")), range(SpinIntegerNode(cam, "OffsetY")))

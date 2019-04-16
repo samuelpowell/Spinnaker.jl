@@ -118,9 +118,9 @@ end
 
 
 """
-  exposure(::Camera)
+  exposure(::Camera) -> Float, String
 
-  Camera exposure mode.
+  Camera exposure time and mode.
 """
 exposure(cam::Camera) = (get(SpinFloatNode(cam, "ExposureTime")), get(SpinEnumNode(cam, "ExposureAuto")))
 
@@ -144,6 +144,13 @@ function exposure!(cam::Camera, t)
   set!(SpinFloatNode(cam, "ExposureTime"), t)
 end
 
+"""
+  exposure_range(::Camera) -> (Float, Float)
+
+  Exposure time limits in microseconds.
+"""
+exposure_limits(cam::Camera) = range(SpinFloatNode(cam, "ExposureTime"))
+
 
 """
   framerate(::Camera) -> Float
@@ -165,3 +172,11 @@ end
 function framerate!(cam::Camera, fps)
   set!(SpinFloatNode(cam, "AcquisitionFrameRate"), fps)
 end
+
+
+"""
+  framerate_limits(::Camera) -> (Float, Float)
+
+  Framerate limits in microseconds.
+"""
+framerate_limits(cam::Camera) = range(SpinFloatNode(cam, "AcquisitionFrameRate"))
