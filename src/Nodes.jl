@@ -30,31 +30,6 @@ function writable(nodeName)
  end
 end
 
-# Node maps
-function GetStringNode(cam::Camera,
-                       name::AbstractString;
-                       nodemap::AbstractNodeMap = CameraNodeMap())
-
-  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  _nodemap!(cam, hNodeMap, nodemap)
-  
-  #  Get camera vendor name
-  hNode = Ref(spinNodeHandle(C_NULL))
-  spinNodeMapGetNode(hNodeMap[], name, hNode)
-  nodestringbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
-  nodestringlen = Ref(Csize_t(MAX_BUFFER_LEN))
-  if readable(hNode)
-    spinStringGetValue(hNode[], nodestringbuf, nodestringlen)
-    nodestring = unsafe_string(pointer(nodestringbuf))
-  else
-    @warn "Could not retrieve transport layer note $node"
-    nodestring = "-"
-  end
-
-  return nodestring
-end
-
-
 function _getnode(cam, name::String, nodemap)
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   _nodemap!(cam, hNodeMap, nodemap) 
@@ -64,6 +39,28 @@ function _getnode(cam, name::String, nodemap)
 end
 
 abstract type AbstractSpinNode end
+
+
+#
+# String nodes 
+#
+
+struct SpinStringNode <: AbstractSpinNode
+  name::String
+  hNode::Ref{spinNodeHandle}
+  SpinStringNode(cam, name::String, nodemap=CameraNodeMap()) = new(name, _getnode(cam, name, nodemap))
+end
+
+function get(node::SpinStringNode)
+  if !readable(node.hNode)
+    throw(ErrorException("Node $(node.name) is not readable"))
+  end
+  strbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
+  strlen = Ref(Csize_t(MAX_BUFFER_LEN))
+  spinStringGetValue(node.hNode[], strbuf, strlen)
+  return unsafe_string(pointer(strbuf))
+end
+
 
 #
 # Integer nodes
@@ -218,3 +215,4 @@ function set!(node::SpinBooleanNode, value::Bool)
   spinBooleanSetValue(node.hNode[], value)
   get(node)
 end
+

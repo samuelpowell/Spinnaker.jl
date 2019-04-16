@@ -17,7 +17,7 @@ catch
   error("Package configuration file missing, run 'Pkg.build(\"Spinnaker\")' to configure.")
 end
 
-const MAX_BUFFER_LEN = Csize_t(255)
+const MAX_BUFFER_LEN = Csize_t(1023)
 
 # include API wrapper
 include("wrapper/CEnum.jl")
