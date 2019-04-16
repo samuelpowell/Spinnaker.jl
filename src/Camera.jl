@@ -6,14 +6,14 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        triggermode, triggermode!,
        triggersource, triggersource!,
        trigger!,
-       exposure, exposure!,
-       framerate, framerate!,
-       gain!,
+       exposure, exposure!, exposure_limits,
+       framerate, framerate!, framerate_limits,
+       gain!, gain_limits,
        adcbits, adcbits!,
        gammaenable!,
        pixelformat, pixelformat!,
        acqusitionmode, acquisitionmode!,
-       sensordims, imagedims, imagedims!, offsetdims, offsetdims!,
+       sensordims, imagedims, imagedims!, imagedims_limits, offsetdims, offsetdims!, offsetdims_limits,
        buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed
 
 """
