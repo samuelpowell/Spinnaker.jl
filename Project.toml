@@ -1,5 +1,6 @@
 name = "Spinnaker"
 uuid = "8e0d2ad3-56b8-53f3-8036-54b674872bef"
+version = "0.1.2"
 
 [compat]
 julia = "≥ 0.7.0"
