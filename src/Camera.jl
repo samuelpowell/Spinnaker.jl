@@ -38,8 +38,12 @@ mutable struct Camera
     # Activate chunk mode
     set!(SpinBooleanNode(cam, "ChunkModeActive"), true)
     for chunkid in ["FrameID", "ExposureTime", "Timestamp"]
-      set!(SpinEnumNode(cam, "ChunkSelector"), chunkid)
-      set!(SpinBooleanNode(cam, "ChunkEnable"), true)
+      try
+        set!(SpinEnumNode(cam, "ChunkSelector"), chunkid)
+        set!(SpinBooleanNode(cam, "ChunkEnable"), true)
+      catch e
+        @warn "Unable to enable $chunkid chunk, image metadata may be incorrect"
+      end
     end
     return cam
   end
