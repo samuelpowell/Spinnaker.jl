@@ -26,7 +26,7 @@ end
 
   Camera gain limits in dB.
 """
-gain_limits(cam::Camera) = range(SpinFloatNode("Gain"))
+gain_limits(cam::Camera) = range(SpinFloatNode(cam,"Gain"))
 
 
 """
