@@ -36,7 +36,7 @@ pixelformat!(cam::Camera, fmt) = set!(SpinEnumNode(cam, "PixelFormat"), fmt)
 
   Return the width and height of the sensor.
 """
-sensordims(cam::Camera) = (get(SpinIntegerNode(cam, "SensorWidth")), get(SpinIntegerNode(cam, "SensorWidth")))
+sensordims(cam::Camera) = (get(SpinIntegerNode(cam, "SensorWidth")), get(SpinIntegerNode(cam, "SensorHeight")))
 
 
 """
