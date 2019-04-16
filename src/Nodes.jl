@@ -86,7 +86,7 @@ function set!(node::SpinIntegerNode, value::Number)
   end
   noderange = range(node)
   value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
-  value > noderange[2] && @warn "Requested value ($value) is greater than minimum ($(noderange[2])), value will be clamped."
+  value > noderange[2] && @warn "Requested value ($value) is greater than maximum ($(noderange[2])), value will be clamped."
   spinIntegerSetValue(node.hNode[], Int64(clamp(value, noderange[1], noderange[2])))
   get(node)  
 end
@@ -126,7 +126,7 @@ function set!(node::SpinFloatNode, value::Number)
   end
   noderange = range(node)
   value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
-  value > noderange[2] && @warn "Requested value ($value) is greater than minimum ($(noderange[2])), value will be clamped."
+  value > noderange[2] && @warn "Requested value ($value) is greater than maximum ($(noderange[2])), value will be clamped."
   spinFloatSetValue(node.hNode[], Float64(clamp(value, noderange[1], noderange[2])))
   get(node)  
 end
