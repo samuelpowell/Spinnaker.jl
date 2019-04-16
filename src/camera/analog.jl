@@ -21,6 +21,13 @@ function gain!(cam::Camera, g)
   set!(SpinFloatNode(cam, "Gain"), g)
 end
 
+"""
+  gain_limits(::Camera) -> (Float, Float)
+
+  Camera gain limits in dB.
+"""
+gain_limits(cam::Camera) = range(SpinFloatNode("Gain"))
+
 
 """
   gammaenable(::Camera) -> Bool
