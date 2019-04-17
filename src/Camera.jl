@@ -37,31 +37,35 @@ mutable struct Camera
     finalizer(_release!, cam)
     # Activate chunk mode
     set!(SpinBooleanNode(cam, "ChunkModeActive"), true)
-    try
-      set!(SpinEnumNode(cam, "ChunkSelector"), "FrameID")
-      set!(SpinBooleanNode(cam, "ChunkEnable"), true)
-    catch e
-        try
-          set!(SpinEnumNode(cam, "ChunkSelector"), "FrameCounter")
-          set!(SpinBooleanNode(cam, "ChunkEnable"), true)
-        catch e2
-          @warn "Unable to enable neither FrameID nor FrameCounter chunks, image metadata may be incorrect"
-        end
-    end
-    try
-      set!(SpinEnumNode(cam, "ChunkSelector"), "ExposureTime")
-      set!(SpinBooleanNode(cam, "ChunkEnable"), true)
-    catch e
-        @warn "Unable to enable ExposureTime chunk, image metadata may be incorrect"
-    end
-     try
-      set!(SpinEnumNode(cam, "ChunkSelector"), "Timestamp")
-      set!(SpinBooleanNode(cam, "ChunkEnable"), true)
-    catch e
-        @warn "Unable to enable Timestamp chunk, image metadata may be incorrect"
-    end
+    _chunkselect(cam, ["FrameID", "FrameCounter"], "frame indentification")
+    _chunkselect(cam, ["ExposureTime"], "exposure time")
+    _chunkselect(cam, ["Timestamp"], "timestamps")
     return cam
   end
+end
+
+
+# Attempt to activate chunk data for each entry in chunknames
+# - this allows chunk names to differ on cameras
+function _chunkselect(cam::Camera, chunknames::Vector{String}, desc::String)
+
+  fail = true
+  i = 1
+  while fail == true
+    try 
+      fail = false
+      set!(SpinEnumNode(cam, "ChunkSelector"), chunknames[i])
+      set!(SpinBooleanNode(cam, "ChunkEnable"), true)
+    catch e
+      fail = true
+    end
+    i += 1
+  end
+
+  if fail
+    @warn "Unable to enable chunk data for $(desc), tried $(chunknames), metadata may be incorrect"
+  end
+
 end
 
 unsafe_convert(::Type{spinCamera}, cam::Camera) = cam.handle
