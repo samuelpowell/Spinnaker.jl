@@ -11,7 +11,7 @@
 function isrunning(cam::Camera)
   pbIsStreaming = Ref(bool8_t(false))
   spinCameraIsStreaming(cam, pbIsStreaming)
-  return (pbIsStreaming == 0x01)
+  return (pbIsStreaming[] == 0x01)
 end
 
 """
