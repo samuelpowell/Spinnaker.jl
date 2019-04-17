@@ -37,12 +37,21 @@ mutable struct Camera
     finalizer(_release!, cam)
     # Activate chunk mode
     set!(SpinBooleanNode(cam, "ChunkModeActive"), true)
-    for chunkid in ["FrameID", "ExposureTime", "Timestamp"]
+    for chunkid in [["FrameID","FrameCounter"], ["ExposureTime"], ["Timestamp"]] #Vector of vector of strings, to allow for 2 different chunk naming regimes (PointGrey vs. FLIR?)
       try
-        set!(SpinEnumNode(cam, "ChunkSelector"), chunkid)
+        set!(SpinEnumNode(cam, "ChunkSelector"), chunkid[1])
         set!(SpinBooleanNode(cam, "ChunkEnable"), true)
       catch e
-        @warn "Unable to enable $chunkid chunk, image metadata may be incorrect"
+        if length(chunkid)>1
+          try
+            set!(SpinEnumNode(cam, "ChunkSelector"), chunkid[2])
+            set!(SpinBooleanNode(cam, "ChunkEnable"), true)
+          catch e2
+            @warn "Unable to enable neither $(chunkid[1]) nor $(chunkid[2]) chunks, image metadata may be incorrect"
+          end
+        else
+          @warn "Unable to enable $(chunkid[1]) chunk, image metadata may be incorrect"
+        end
       end
     end
     return cam
