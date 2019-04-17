@@ -30,6 +30,14 @@ function buffermode!(cam::Camera, mode::String)
 	set!(SpinEnumNode(cam, "StreamBufferHandlingMode", CameraTLStreamNodeMap()), mode)
 end
 
+"""
+	buffertotalcount(::Camera) -> Int
+
+	Counts the number of image buffers that arrived since stream started.
+"""
+function buffertotalcount(cam::Camera)
+	Int(get(SpinIntegerNode(cam, "StreamTotalBufferCount", CameraTLStreamNodeMap())))
+end
 
 """
 	buffercount(::Camera) -> (Int, String)
