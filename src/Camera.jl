@@ -15,7 +15,8 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        acqusitionmode, acquisitionmode!,
        sensordims, imagedims, imagedims!, imagedims_limits, offsetdims, offsetdims!, offsetdims_limits,
        buffercount, buffercount!, buffermode, buffermode!, totalbuffercount, bufferunderrun, bufferfailed,
-       blocktransfersize, blocktransfersize!
+       blocktransfersize, blocktransfersize!,
+       supportedeventsources, eventsource, eventsource!, eventnotification, eventnotification!
 
 """
  Spinnaker SDK Camera object
@@ -97,6 +98,7 @@ include(joinpath("camera", "acquisition.jl"))
 include(joinpath("camera", "analog.jl"))
 include(joinpath("camera", "format.jl"))
 include(joinpath("camera", "stream.jl"))
+include(joinpath("camera", "event.jl"))
 
 #
 # Device metadata
