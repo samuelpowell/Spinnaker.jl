@@ -14,7 +14,8 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        pixelformat, pixelformat!,
        acqusitionmode, acquisitionmode!,
        sensordims, imagedims, imagedims!, imagedims_limits, offsetdims, offsetdims!, offsetdims_limits,
-       buffercount, buffercount!, buffermode, buffermode!, buffertotalcount, bufferunderrun, bufferfailed
+       buffercount, buffercount!, buffermode, buffermode!, totalbuffercount, bufferunderrun, bufferfailed,
+       blocktransfersize, blocktransfersize!
 
 """
  Spinnaker SDK Camera object

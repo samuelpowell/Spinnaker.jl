@@ -40,6 +40,25 @@ function totalbuffercount(cam::Camera)
 end
 
 """
+	blocktransfersize(::Camera) -> Int
+
+	Return the image breakup size that is used.
+"""
+function blocktransfersize(cam::Camera)
+	get(SpinIntegerNode(cam, "StreamBlockTransferSize", CameraTLStreamNodeMap()))
+end
+
+"""
+	blocktransfersize!(::Camera) -> Int
+
+	Controls the image breakup size that should be used on the stream.
+"""
+function blocktransfersize!(cam::Camera, size::Integer)
+	set!(SpinIntegerNode(cam, "StreamBlockTransferSize", CameraTLStreamNodeMap()),size)
+    blocktransfersize(cam)
+end
+
+"""
 	buffercount(::Camera) -> (Int, String)
 
 	Return the buffer count mode and specified number of buffers.
