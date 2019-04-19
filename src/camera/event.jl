@@ -103,40 +103,94 @@ end
 #end
 
 
+# Should we be building a struct like this??? 
+# Or can we just spinDeviceEvent(Cvoid)?
 
-#typedef void(*spinDeviceEventFunction)(const spinDeviceEventData hEventData, const char* pEventName, void* pUserData);
+#mutable struct DeviceEvent
+#  handle::spinDeviceEvent
+#
+#  function DeviceEvent()
+#    hevent_ref = Ref(spinDeviceEvent(C_NULL))
+#    event = new(hevent_ref[])
+#    return event
+#  end
+#end
+#
+#unsafe_convert(::Type{spinDeviceEvent}, event::DeviceEvent) = event.handle
+#unsafe_convert(::Type{Ptr{spinDeviceEvent}}, event::DeviceEvent) = pointer_from_objref(event)
+
+
+
+"""
+  printevent()
+  callable function
+
+
+  C API - SpinnakerDefsC.h
+  typedef void(*spinDeviceEventFunction)(const spinDeviceEventData hEventData, const char* pEventName, void* pUserData);
+"""
 function printevent(hEventData::spinDeviceEventData, pEventName::Cstring, pUserData::Ptr{Cvoid})::Cvoid
   println("event happened")
 end
 
+"""
+test(cam)
+test function
+
+"""
 function test(cam::Camera)
-  c_f = @cfunction(printevent, Cvoid, (Ptr{Cvoid}, Cstring, Ref{Cvoid}))
-  event = spinDeviceEvent(C_NULL)
+  c_f = @cfunction(printevent, Cvoid, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}))
   
-  #spinDeviceEventCreate(spinDeviceEvent* phDeviceEvent, spinDeviceEventFunction pFunction, void* pUserData);
-  spinDeviceEventCreate(Ref{event}, c_f, Ptr{Cvoid})
+  eventExposureEnd = spinDeviceEvent(Cvoid)
+  #eventExposureEnd = DeviceEvent() # Attempting to use above struct.. not sure what I'm doing there...
   
-  #spinCameraRegisterDeviceEvent(spinCamera hCamera, spinDeviceEvent hDeviceEvent);
-  spinCameraRegisterDeviceEventEx(cam, event, "EventExposureEnd")
-  return event
+  
+  spinDeviceEventCreate(Ptr{eventExposureEnd}, c_f, Ptr{Cvoid})
+  """
+    C function:
+    spinDeviceEventCreate(spinDeviceEvent* phDeviceEvent, spinDeviceEventFunction pFunction, void* pUserData);
+
+    spin_api.jl:
+    function spinDeviceEventCreate(phDeviceEvent, pFunction, pUserData)
+      checkerror(ccall((:spinDeviceEventCreate, libSpinnaker_C), spinError, (Ptr{spinDeviceEvent}, spinDeviceEventFunction, Ptr{Cvoid}), phDeviceEvent, pFunction, pUserData))
+    end
+  """
+
+  
+  spinCameraRegisterDeviceEventEx(cam, eventExposureEnd, "EventExposureEnd")
+  """
+    C function: 
+    SPINNAKERC_API spinCameraRegisterDeviceEvent(spinCamera hCamera, spinDeviceEvent hDeviceEvent);
+    SPINNAKERC_API spinCameraRegisterDeviceEventEx(spinCamera hCamera, spinDeviceEvent hDeviceEvent, const char* pName);
+
+    spin_api.jl:
+    function spinCameraRegisterDeviceEvent(hCamera, hDeviceEvent)
+      checkerror(ccall((:spinCameraRegisterDeviceEvent, libSpinnaker_C), spinError, (spinCamera, spinDeviceEvent), hCamera, hDeviceEvent))
+    end
+    function spinCameraRegisterDeviceEventEx(hCamera, hDeviceEvent, pName)
+      checkerror(ccall((:spinCameraRegisterDeviceEventEx, libSpinnaker_C), spinError, (spinCamera, spinDeviceEvent, Cstring), hCamera, hDeviceEvent, pName))
+    end
+  """
+  
+  return eventExposureEnd
 end
   
   
 """
-Example c code
-NOTE: This code is out of date. Various names and argument requirements have changed
+  Example c code from https://www.ptgrey.com/support/downloads/10612
+  NOTE: This code is out of date. Various names and argument requirements have changed
 
-// Create and register ExposureEvent
-spinEvent eventExposureEnd = NULL;
-error = spinEventCreate(&eventExposureEnd, onSpecificDeviceEvent, NULL);
-error = spinCameraRegisterEvent(hCam, eventExposureEnd, "EventExposureEnd");
-// Create a function to occur upon specific event occurrences;
-//ensure exact same function signature is used
+  // Create and register ExposureEvent
+  spinEvent eventExposureEnd = NULL;
+  error = spinEventCreate(&eventExposureEnd, onSpecificDeviceEvent, NULL);
+  error = spinCameraRegisterEvent(hCam, eventExposureEnd, "EventExposureEnd");
+  // Create a function to occur upon specific event occurrences;
+  //ensure exact same function signature is used
 
-void onSpecificDeviceEvent(const char* pEventName, void* pUserData)
-{
-    printf("\t// Specific device event %s...\n", pEventName, (char*)pUserData);
-}
+  void onSpecificDeviceEvent(const char* pEventName, void* pUserData)
+  {
+      printf("\t// Specific device event %s...\n", pEventName, (char*)pUserData);
+  }
 """
 
 
