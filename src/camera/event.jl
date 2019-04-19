@@ -106,6 +106,7 @@ end
 
 #typedef void(*spinDeviceEventFunction)(const spinDeviceEventData hEventData, const char* pEventName, void* pUserData);
 function printevent(hEventData::spinDeviceEventData, pEventName::Cstring, pUserData::Ptr{Cvoid})::Cvoid
+  println("event happened")
 end
 
 function test(cam::Camera)
