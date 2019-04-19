@@ -91,4 +91,51 @@ function eventnotification!(cam::Camera, state::Bool)
 end
 
 
+### EXPERIMENTAL BELOW HERE
+
+
+#function registereventcallback(cam::Camera,f::Function)
+#  c_f = @cfunction($f, Cvoid, (Cstring,C_NULL))
+#  event = spinDeviceEvent(C_NULL)
+#  spinDeviceEventCreate(Ref(event),c_f,C_NULL)
+#  spinCameraRegisterDeviceEventEx(cam,event,"EventExposureEnd")
+#  return event
+#end
+
+
+
+#typedef void(*spinDeviceEventFunction)(const spinDeviceEventData hEventData, const char* pEventName, void* pUserData);
+function printevent(hEventData::spinDeviceEventData, pEventName::Cstring, pUserData::Ptr{Cvoid})::Cvoid
+end
+
+function test(cam::Camera)
+  c_f = @cfunction(printevent, Cvoid, (Ptr{Cvoid}, Cstring, Ref{Cvoid}))
+  event = spinDeviceEvent(C_NULL)
+  
+  #spinDeviceEventCreate(spinDeviceEvent* phDeviceEvent, spinDeviceEventFunction pFunction, void* pUserData);
+  spinDeviceEventCreate(Ref{event}, c_f, Ptr{Cvoid})
+  
+  #spinCameraRegisterDeviceEvent(spinCamera hCamera, spinDeviceEvent hDeviceEvent);
+  spinCameraRegisterDeviceEventEx(cam, event, "EventExposureEnd")
+  return event
+end
+  
+  
+"""
+Example c code
+NOTE: This code is out of date. Various names and argument requirements have changed
+
+// Create and register ExposureEvent
+spinEvent eventExposureEnd = NULL;
+error = spinEventCreate(&eventExposureEnd, onSpecificDeviceEvent, NULL);
+error = spinCameraRegisterEvent(hCam, eventExposureEnd, "EventExposureEnd");
+// Create a function to occur upon specific event occurrences;
+//ensure exact same function signature is used
+
+void onSpecificDeviceEvent(const char* pEventName, void* pUserData)
+{
+    printf("\t// Specific device event %s...\n", pEventName, (char*)pUserData);
+}
+"""
+
 
