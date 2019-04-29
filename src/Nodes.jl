@@ -38,7 +38,27 @@ function _getnode(cam, name::String, nodemap)
   return hNode
 end
 
+function _getnodemap(cam, nodemap)
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  _nodemap!(cam, hNodeMap, nodemap) 
+  return hNodeMap
+end
+
 abstract type AbstractSpinNode end
+
+function invalidate!(node::AbstractSpinNode)
+  spinNodeInvalidateNode(node.hNode[])
+end
+
+function poll!(cam, nodemap)
+  spinNodeMapPoll(_getnodemap(cam,nodemap)[],0)
+end
+
+function pollingtime(node::AbstractSpinNode)
+  hval = Ref(Int64(0))
+  spinNodeGetPollingTime(node.hNode[],hval)
+  return hval[]
+end
 
 
 #

@@ -36,7 +36,9 @@ end
 	Counts the number of image buffers that arrived since stream started.
 """
 function totalbuffercount(cam::Camera)
-	Int(get(SpinIntegerNode(cam, "StreamTotalBufferCount", CameraTLStreamNodeMap())))
+	invalidate!(SpinIntegerNode(cam, "StreamTotalBufferCount", CameraTLStreamNodeMap()))
+    #poll!(cam, CameraTLStreamNodeMap())
+    return get(SpinIntegerNode(cam, "StreamTotalBufferCount", CameraTLStreamNodeMap()))
 end
 
 """
