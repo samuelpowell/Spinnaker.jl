@@ -40,12 +40,8 @@ end
 
 abstract type AbstractSpinNode end
 
-function invalidate!(node::AbstractSpinNode)
-  spinNodeInvalidateNode(node.hNode[])
-end
-
 function poll!(cam, nodemap)
-  spinNodeMapPoll(_nodemap(cam,nodemap)[],0)
+  spinNodeMapPoll(nodemap.hNodeMap[],0)
 end
 
 function pollingtime(node::AbstractSpinNode)
