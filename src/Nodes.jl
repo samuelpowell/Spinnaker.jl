@@ -38,12 +38,6 @@ function _getnode(cam, name::String, nodemap)
   return hNode
 end
 
-function _getnodemap(cam, nodemap)
-  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  _nodemap!(cam, hNodeMap, nodemap) 
-  return hNodeMap
-end
-
 abstract type AbstractSpinNode end
 
 function invalidate!(node::AbstractSpinNode)
@@ -51,7 +45,7 @@ function invalidate!(node::AbstractSpinNode)
 end
 
 function poll!(cam, nodemap)
-  spinNodeMapPoll(_getnodemap(cam,nodemap)[],0)
+  spinNodeMapPoll(_nodemap(cam,nodemap)[],0)
 end
 
 function pollingtime(node::AbstractSpinNode)

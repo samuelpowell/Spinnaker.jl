@@ -5,6 +5,12 @@
 
 abstract type AbstractNodeMap end
 
+function _nodemap(cam, nm::AbstractNodeMap)
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  _nodemap!(cam, hNodeMap, nm) 
+  return hNodeMap
+end
+
 struct CameraNodeMap <: AbstractNodeMap end
 
 function _nodemap!(cam, hNodeMap, nm::CameraNodeMap) 
