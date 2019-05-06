@@ -182,16 +182,20 @@ getimage(cam::Camera; release=true) = getimage!(cam, SpinImage(), release=releas
 
 
 """
-  getimage!(::Camera, ::SpinImage; release=true) -> Image
+  getimage!(::Camera, ::SpinImage; release=true, timeout=-1) -> Image
 
-  Copy the next image from the specified camera, blocking until available, overwriting existing.
+  Copy the next image from the specified camera, blocking until available unless timeout is specified, overwriting existing.
   If releaseis false, the image buffer is not released.
 """
-function getimage!(cam::Camera, image::SpinImage; release=true)
+function getimage!(cam::Camera, image::SpinImage; release=true, timeout=-1)
 
   # Get image handle and check it's complete
   himage_ref = Ref(spinImage(C_NULL))
-  spinCameraGetNextImage(cam, himage_ref);
+  if timeout == -1
+    spinCameraGetNextImage(cam, himage_ref);
+  else
+    spinCameraGetNextImageEx(cam, timeout, himage_ref);
+  end
   @assert _isimagecomplete(himage_ref)
 
   # Create output image, copy and release buffer
@@ -226,9 +230,9 @@ end
 
   Function also returns image ID and timestamp metadata.
 """
-function getimage(cam::Camera, ::Type{T}; normalize=true, release=true) where T
+function getimage(cam::Camera, ::Type{T}; normalize=true, release=true, timeout=-1) where T
 
-  himage_ref, width, height, id, timestamp, exposure = _pullim(cam)
+  himage_ref, width, height, id, timestamp, exposure = _pullim(cam, timeout=timeout)
   imdat = Array{T,2}(undef, (width,height))
   camim = CameraImage(imdat, id, timestamp, exposure)
   _copyimage!(himage_ref[], width, height, camim, normalize)
@@ -253,11 +257,11 @@ end
   format, and thus the array will be in the range [0,1].
 
   To return images compatible with Images.jl, one can request a Gray value, e.g.,
-  `getimage!(cam, Gray{N0f8}, normalize=true)`. 
+  `getimage!(cam, Gray{N0f8}, normalize=true)`.
 """
-function getimage!(cam::Camera, image::CameraImage{T,2}; normalize=true, release=true) where T
-  
-  himage_ref, width, height, id, timestamp, exposure = _pullim(cam)
+function getimage!(cam::Camera, image::CameraImage{T,2}; normalize=true, release=true, timeout=-1) where T
+
+  himage_ref, width, height, id, timestamp, exposure = _pullim(cam, timeout=timeout)
   camim = CameraImage(image.data, id, timestamp, exposure)
   _copyimage!(himage_ref[], width, height, camim, normalize)
   if release
@@ -266,12 +270,16 @@ function getimage!(cam::Camera, image::CameraImage{T,2}; normalize=true, release
   return camim
 
 end
-                     
-function _pullim(cam::Camera)
+
+function _pullim(cam::Camera;timeout=-1)
 
   # Get image handle and check it's complete
   himage_ref = Ref(spinImage(C_NULL))
-  spinCameraGetNextImage(cam, himage_ref);
+  if timeout == -1
+    spinCameraGetNextImage(cam, himage_ref);
+  else
+    spinCameraGetNextImageEx(cam, timeout, himage_ref);
+  end
   if !_isimagecomplete(himage_ref)
     spinImageRelease(himage_ref[])
     throw(ErrorException("Image not complete"))
@@ -309,9 +317,9 @@ end
   precision numbers in the range [0, 255]. `If normalize == true` the input data is interpreted as
   an associated fixed point format, and thus the array will be in the range [0,1].
 """
-function getimage!(cam::Camera, image::Array{T,2}; normalize=true, release=true) where T
-  
-  himage_ref, width, height, id, timestamp, exposure = _pullim(cam)
+function getimage!(cam::Camera, image::Array{T,2}; normalize=true, release=true, timeout=-1) where T
+
+  himage_ref, width, height, id, timestamp, exposure = _pullim(cam, timeout=timeout)
   _copyimage!(himage_ref[], width, height, image, normalize)
   if release
     spinImageRelease(himage_ref[])
@@ -331,11 +339,15 @@ end
     Save the next image from the specified camera to file `fn`, blocking until
     available. If release is false, the image buffer is not released.
 """
-function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat; relase=true)
+function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat; relase=true, timeout=-1)
 
     # Get image handle and check it's complete
     himage_ref = Ref(spinImage(C_NULL))
-    spinCameraGetNextImage(cam, himage_ref);
+    if timeout == -1
+      spinCameraGetNextImage(cam, himage_ref);
+    else
+      spinCameraGetNextImageEx(cam, timeout, himage_ref);
+    end
     @assert _isimagecomplete(himage_ref)
     spinImageSave(himage_ref[], fn, fmt)
     if release
@@ -343,4 +355,3 @@ function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat; re
     end
 
 end
-
