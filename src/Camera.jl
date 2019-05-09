@@ -173,18 +173,18 @@ end
 #
 
 """
-  getimage(::Camer; release=true) -> Image
+  getimage(::Camer; release=true, timeout=-1) -> Image
 
-  Copy the next image from the specified camera, blocking until available. If release
+  Copy the next image from the specified camera, blocking until available unless a timeout of >= 0 (ms) is specified. If release
   is false, the image buffer is not released.
 """
-getimage(cam::Camera; release=true) = getimage!(cam, SpinImage(), release=release)
+getimage(cam::Camera; release=true, timeout=-1) = getimage!(cam, SpinImage(), release=release, timeout=timeout)
 
 
 """
   getimage!(::Camera, ::SpinImage; release=true, timeout=-1) -> Image
 
-  Copy the next image from the specified camera, blocking until available unless timeout is specified, overwriting existing.
+  Copy the next image from the specified camera, blocking until available unless a timeout of >= 0 (ms) is specified, overwriting existing.
   If releaseis false, the image buffer is not released.
 """
 function getimage!(cam::Camera, image::SpinImage; release=true, timeout=-1)
@@ -214,10 +214,10 @@ end
 #
 
 """
-  getimage(::Camera, ::Type{T}; normalize=true; release=true) -> CameraImage
+  getimage(::Camera, ::Type{T}; normalize=true; release=true, timeout=-1) -> CameraImage
 
   Copy the next image from the specified camera, converting the image data to the specified array
-  format, blocking until available. If release is false, the image buffer is not released.
+  format, blocking until available unless a timeout of >= 0 (ms) is specified. If release is false, the image buffer is not released.
 
   If `normalize == false`, the input data from the camera is interpreted as a number in the range of
   the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
@@ -245,11 +245,12 @@ end
 
 
 """
-  getimage!(::Camera, ::CameraImage{T,2}; normalize=false; release=true)
+  getimage!(::Camera, ::CameraImage{T,2}; normalize=false; release=true, timeout=-1)
 
-  Copy the next iamge from the specified camera, converting to the format of, and overwriting the 
-  provided CameraImage. If release is false, the image buffer is not released.
-  
+  Copy the next iamge from the specified camera, converting to the format of, and overwriting the
+  provided CameraImage, blocking until available unless a timeout of >= 0 (ms) is specified. If release is
+  false, the image buffer is not released.
+
   If `normalize == false`, the input data from the camera is interpreted as a number in the range of
   the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
   `getimage!(cam, Float64, normalize=false)` will return an array of dobule precision numbers in
@@ -306,11 +307,12 @@ end
 #
 
 """
-  getimage!(::Camera, ::AbstractArray{T,2}; normalize=false, relase=true)
+  getimage!(::Camera, ::AbstractArray{T,2}; normalize=false, relase=true, timeout=-1)
 
-  Copy the next iamge from the specified camera, converting to the format of, and overwriting the 
-  provided abstract array. If release is false, the image buffer is not released.
-  
+  Copy the next iamge from the specified camera, converting to the format of, and overwriting the
+  provided abstract array, blocking until available unless a timeout of >= 0 (ms) is specified. If release
+  is false, the image buffer is not released.
+
   If `normalize == false`, the input data from the camera is interpreted as a number in the range of
   the underlying type, e.g., for a camera operating in Mono8 pixel format, a call
   `getimage!(cam, Array{Float64}(undef, dims...), normalize=false)` will return an array of dobule
@@ -334,10 +336,10 @@ end
 #
 
 """
-    saveimage()::Camera, fn::AbstractString, ::spinImageFileFormat; release=true)
+    saveimage()::Camera, fn::AbstractString, ::spinImageFileFormat; release=true, timeout=-1)
 
-    Save the next image from the specified camera to file `fn`, blocking until
-    available. If release is false, the image buffer is not released.
+    Save the next image from the specified camera to file `fn`, blocking until available unless
+    a timeout of >= 0 (ms) is specified. If release is false, the image buffer is not released.
 """
 function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat; relase=true, timeout=-1)
 
