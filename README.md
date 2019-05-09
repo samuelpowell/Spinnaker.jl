@@ -116,7 +116,7 @@ See `gammaenable(!)`, `pixelformat(!)`, `adcbits(!)`, `sensordims`, `imagedims(!
 
 ### Retrieving images
 
-All of the following functions are blocking, and execution will halt until an image is available. For each function the keyword argument `release=true` is supported which by default will release the buffer for further use. If you choose `release=false` then the buffer will not be released, allowing one to inspect the image without removing it from the stream buffer (e.g the next call to the function will return the same image).
+All of the following functions are blocking by default, and execution will halt until an image is available. Use they keyword argument 'timeout' to specify a timeout in ms, after which an error is thrown. For each function the keyword argument `release=true` is supported which by default will release the buffer for further use. If you choose `release=false` then the buffer will not be released, allowing one to inspect the image without removing it from the stream buffer (e.g the next call to the function will return the same image).
 
 Images can be retrieved in three formats:
  - CameraImage, an abstract array interface of arbitrary type, which stores metadata about the image;
