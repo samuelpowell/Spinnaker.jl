@@ -133,8 +133,8 @@ exposure_limits(cam::Camera) = range(SpinFloatNode(cam, "ExposureTime"))
   Write lower and upper limits of the Auto Exposure Time (us) value.
 """
 function autoexposure_limits!(cam::Camera, lims)
-  set!(SpinFloatNode(cam, "AutoExposureTimeLowerLimit"), lims[1])
-  set!(SpinFloatNode(cam, "AutoExposureTimeUpperLimit"), lims[2])
+  set!(SpinFloatNode(cam, cam.names["AutoExposureTimeLowerLimit"]), lims[1])
+  set!(SpinFloatNode(cam, cam.names["AutoExposureTimeUpperLimit"]), lims[2])
   autoexposure_limits(cam)
 end
 
@@ -143,7 +143,10 @@ end
 
   Lower and upper limits of the Auto Exposure Time (us) value.
 """
-autoexposure_limits(cam::Camera) = (get(SpinFloatNode(cam, "AutoExposureTimeLowerLimit")), get(SpinFloatNode(cam, "AutoExposureTimeUpperLimit")))
+function autoexposure_limits(cam::Camera)
+  (get(SpinFloatNode(cam, cam.names["AutoExposureTimeLowerLimit"])),
+   get(SpinFloatNode(cam, cam.names["AutoExposureTimeUpperLimit"])))
+end
 
 """
   framerate(::Camera) -> Float
