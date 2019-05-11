@@ -50,9 +50,8 @@ mutable struct Camera
     cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureTimeUpperLimit"
     
     try
-      Spinnaker.get(Spinnaker.SpinIntegerNode(cam, "AutoExposureTimeLowerLimit"))
+      Spinnaker.get(Spinnaker.SpinFloatNode(cam, "AutoExposureTimeLowerLimit"))
     catch
-      @info "renameing exposure"
       cam.names["AutoExposureTimeLowerLimit"] = "AutoExposureExposureTimeLowerLimit"
       cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureExposureTimeUpperLimit"
     end
