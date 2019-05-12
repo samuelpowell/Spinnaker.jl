@@ -23,6 +23,12 @@ install and build the package.
 ]add Spinnaker
 ```
 
+## Graphical user interface
+
+[SpinnakerGUI.jl](https://github.com/ianshmean/SpinnakerGUI.jl) by @ianshmean uses
+@Gnimuc's [CImGui.jl](https://github.com/Gnimuc/CImGui.jl) package to implement
+an experimental GUI for image capture and recording, driven by this package.
+
 ## High-level Interface
 
 The high-level interface provides convenience functions for more typical camera
