@@ -28,19 +28,35 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
 """
 mutable struct Camera
   handle::spinCamera
+  names::Dict{String, String}
 
   function Camera(handle)
     @assert spinsys.handle != C_NULL
     @assert handle != C_NULL
     spinCameraDeInit(handle)
     spinCameraInit(handle)
-    cam = new(handle)
+    names = Dict{String, String}()
+    cam = new(handle, names)
     finalizer(_release!, cam)
+    
     # Activate chunk mode
     set!(SpinBooleanNode(cam, "ChunkModeActive"), true)
     _chunkselect(cam, ["FrameID", "FrameCounter"], "frame indentification")
     _chunkselect(cam, ["ExposureTime"], "exposure time")
     _chunkselect(cam, ["Timestamp"], "timestamps")
+
+    # Discover ambiguous names
+    cam.names["AutoExposureTimeLowerLimit"] = "AutoExposureTimeLowerLimit"
+    cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureTimeUpperLimit"
+    
+    try
+      Spinnaker.get(Spinnaker.SpinFloatNode(cam, "AutoExposureTimeLowerLimit"))
+    catch
+      cam.names["AutoExposureTimeLowerLimit"] = "AutoExposureExposureTimeLowerLimit"
+      cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureExposureTimeUpperLimit"
+    end
+
+
     return cam
   end
 end
