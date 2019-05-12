@@ -166,6 +166,7 @@ end
   is returned.
 """
 function framerate!(cam::Camera, fps)
+  set!(SpinBooleanNode(cam, "AcquisitionFrameRateEnable"), true)
   set!(SpinFloatNode(cam, "AcquisitionFrameRate"), fps)
 end
 
