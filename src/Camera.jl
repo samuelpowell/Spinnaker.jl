@@ -33,7 +33,7 @@ mutable struct Camera
   function Camera(handle)
     @assert spinsys.handle != C_NULL
     @assert handle != C_NULL
-    # nspinCameraDeInit(handle)
+    # spinCameraDeInit(handle)
     spinCameraInit(handle)
     names = Dict{String, String}()
     cam = new(handle, names)
@@ -90,6 +90,7 @@ unsafe_convert(::Type{Ptr{spinCamera}}, cam::Camera) = pointer_from_objref(cam)
 
 function _reinit(cam::Camera)
   spinCameraDeInit(cam)
+  sleep(0.1)
   spinCameraInit(cam)
   return cam
 end
@@ -97,9 +98,11 @@ end
 # Release handle to system
 function _release!(cam::Camera)
   if cam.handle != C_NULL
-    try
-      stop!(cam)
-    catch e
+    if isrunning(cam)
+      try
+        stop!(cam)
+      catch e
+      end
     end
     try
       spinCameraDeInit(cam)
