@@ -28,9 +28,11 @@ unsafe_convert(::Type{Ptr{spinCameraList}}, camlist::CameraList) = pointer_from_
 
 # Clear list and release handle
 function _release!(camlist::CameraList)
-  spinCameraListClear(camlist)
-  spinCameraListDestroy(camlist)
-  camlist.handle = C_NULL
+  if camlist.handle != C_NULL
+    spinCameraListClear(camlist)
+    spinCameraListDestroy(camlist)
+    camlist.handle = C_NULL
+  end
   return nothing
 end
 
