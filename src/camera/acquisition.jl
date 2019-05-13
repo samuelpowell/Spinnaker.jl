@@ -15,11 +15,34 @@ function isrunning(cam::Camera)
 end
 
 """
+  isinit(::Camera) -> Bool
+  
+  Determine if the camera is currently initialised. This should
+  always be true for a camera object created by Spinnaker.jl.
+"""
+function isinit(cam::Camera)
+  pbIsInit = Ref(bool8_t(false))
+  spinCameraIsInitialized(cam, pbIsInit)
+  return (pbIsInit[] == 0x01)
+end
+
+
+"""
   start!(::Camera)
 
   Start acquistion on specified camera.
 """
 function start!(cam::Camera)
+  if isrunning(cam)
+    @warn "Ignoring attempt to start camera which is already running"
+    return cam
+  end
+
+  if !isinit(cam)
+    @warn "Ignoring attempt to start camera which is not initialised"
+    return cam
+  end
+
   spinCameraBeginAcquisition(cam)
   return cam
 end
@@ -30,6 +53,16 @@ end
   Stop acquistion on specified camera.
 """
 function stop!(cam::Camera)
+  if !isrunning(cam)
+    @warn "Ignoring attempt to stop camera which is not running"
+    return cam
+  end
+
+  if !isinit(cam)
+    @warn "Ignoring attempt to stop camera which is not initialised"
+    return cam
+  end
+
   spinCameraEndAcquisition(cam)
   return cam
 end

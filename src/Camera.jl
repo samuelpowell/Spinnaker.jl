@@ -33,7 +33,7 @@ mutable struct Camera
   function Camera(handle)
     @assert spinsys.handle != C_NULL
     @assert handle != C_NULL
-    spinCameraDeInit(handle)
+    # nspinCameraDeInit(handle)
     spinCameraInit(handle)
     names = Dict{String, String}()
     cam = new(handle, names)
@@ -101,8 +101,12 @@ function _release!(cam::Camera)
       stop!(cam)
     catch e
     end
-    spinCameraDeInit(cam)
-    spinCameraRelease(cam)
+    try
+      spinCameraDeInit(cam)
+      spinCameraRelease(cam)
+    catch e
+      @warn "Unable to release camera, Spinnaker state may be corrupted."
+    end
     cam.handle = C_NULL
   end
   return nothing
