@@ -57,7 +57,7 @@ mutable struct Camera
       cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureExposureTimeUpperLimit"
     end
     try
-      Spinnaker.get(Spinnaker.SpinFloatNode(cam, "AcquisitionFrameRateEnabled"))
+      Spinnaker.get(Spinnaker.SpinBooleanNode(cam, "AcquisitionFrameRateEnabled"))
     catch
       cam.names["AcquisitionFrameRateEnabled"] = "AcquisitionFrameRateEnable"
     end
