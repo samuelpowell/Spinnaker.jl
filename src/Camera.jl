@@ -48,12 +48,18 @@ mutable struct Camera
     # Discover ambiguous names
     cam.names["AutoExposureTimeLowerLimit"] = "AutoExposureTimeLowerLimit"
     cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureTimeUpperLimit"
-    
+    cam.names["AcquisitionFrameRateEnabled"] = "AcquisitionFrameRateEnabled"
+        
     try
       Spinnaker.get(Spinnaker.SpinFloatNode(cam, "AutoExposureTimeLowerLimit"))
     catch
       cam.names["AutoExposureTimeLowerLimit"] = "AutoExposureExposureTimeLowerLimit"
       cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureExposureTimeUpperLimit"
+    end
+    try
+      Spinnaker.get(Spinnaker.SpinBooleanNode(cam, "AcquisitionFrameRateEnabled"))
+    catch
+      cam.names["AcquisitionFrameRateEnabled"] = "AcquisitionFrameRateEnable"
     end
 
 
