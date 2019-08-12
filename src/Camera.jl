@@ -341,7 +341,7 @@ end
   precision numbers in the range [0, 255]. `If normalize == true` the input data is interpreted as
   an associated fixed point format, and thus the array will be in the range [0,1].
 """
-function getimage!(cam::Camera, image::Array{T,2}; normalize=true, release=true, timeout=-1) where T
+function getimage!(cam::Camera, image::AbstractArray{T,2}; normalize=true, release=true, timeout=-1) where T
 
   himage_ref, width, height, id, timestamp, exposure = _pullim(cam, timeout=timeout)
   _copyimage!(himage_ref[], width, height, image, normalize)
