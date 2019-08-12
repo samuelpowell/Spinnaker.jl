@@ -94,7 +94,7 @@ function _copyimage!(himage_ref::spinImage,
     data = unsafe_wrap(Array,  Ptr{Ti}(rawptr[]), (width, height));
     
     # Convert and copy data from buffer
-    image .= T.(data)
+    copyto!(image, T.(data))
     return image
   
   end
