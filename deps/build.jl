@@ -14,8 +14,12 @@ function find_spinnaker()
     path = "/usr/lib"
     libspinnaker = "libSpinnaker_C.so"
     libspinvideo = "libSpinVideo_C.so"
+  elseif Sys.isapple()
+    path = "/usr/local/lib"
+    libspinnaker = "libSpinnaker_C.dylib"
+    libspinvideo = "libSpinVideo_C.dylib"
   else
-    @error "Spinnaker SDK only supported on Linux and Windows platforms"
+    @error "Spinnaker SDK only supported on Linux, Windows and MacOS platforms"
   end
 
   return path, libspinnaker, libspinvideo
