@@ -157,6 +157,12 @@ function framerate(cam::Camera)
   get(SpinFloatNode(cam, "AcquisitionFrameRate"))
 end
 
+"""
+  framerate!(::Camera)
+
+  Activate (continuous) automatic framerate control on specified camera.
+"""
+framerate!(cam::Camera) = set!(SpinEnumNode(cam, "AcquisitionFrameRateAuto"), "Continuous")
 
 """
   framerate!(::Camera, ::Number) -> Float
@@ -166,10 +172,10 @@ end
   is returned.
 """
 function framerate!(cam::Camera, fps)
+  set!(SpinEnumNode(cam, "AcquisitionFrameRateAuto"), "Off")
   set!(SpinBooleanNode(cam, cam.names["AcquisitionFrameRateEnabled"]), true)
   set!(SpinFloatNode(cam, "AcquisitionFrameRate"), fps)
 end
-
 
 """
   framerate_limits(::Camera) -> (Float, Float)
