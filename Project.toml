@@ -1,6 +1,6 @@
 name = "Spinnaker"
 uuid = "8e0d2ad3-56b8-53f3-8036-54b674872bef"
-version = "0.1.5"
+version = "0.1.6"
 
 [deps]
 FixedPointNumbers = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
