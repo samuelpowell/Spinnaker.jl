@@ -15,7 +15,9 @@ function find_spinnaker()
     libspinnaker = "libSpinnaker_C.so"
     libspinvideo = "libSpinVideo_C.so"
   else
-    @error "Spinnaker SDK only supported on Linux and Windows platforms"
+    path = "/usr/local/lib"
+    libspinnaker = "libSpinnaker_C.dylib"
+    libspinvideo = "libSpinVideo_C.dylib"
   end
 
   return path, libspinnaker, libspinvideo
