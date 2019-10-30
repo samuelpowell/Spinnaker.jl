@@ -149,6 +149,52 @@ function autoexposure_limits(cam::Camera)
 end
 
 """
+  autoexposure_lighting_mode!(::Camera, mode::String)
+
+  Change autoexposure lighting mode.
+  Options:
+  - "AutoDetect":
+  - "Backlight": Used when a strong light is coming from the back of the object.
+  - "Frontlight": Used when a strong light is shining in the front of the object
+                  while the background is dark.
+  - "Normal": Used when the object is not under backlight or frontlight conditions
+"""
+function autoexposure_lighting_mode!(cam::Camera, mode::String)
+  if in(mode, ["AutoDetect", "Backlight", "Frontlight", "Normal"])
+    set!(SpinEnumNode(cam, "AutoExposureLightingMode"), mode)
+  else
+    @error """Lighting mode "$(mode)" not recognized"""
+  end
+end
+
+"""
+  autoexposure_metering_mode!(::Camera)
+
+  Change to "Normal" lighting mode and set the autoexposure metering mode.
+  Options:
+  - "Average": Measures the light from the entire scene uniformly to determine
+                the final exposure value. Every portion of the exposed area has
+                the same contribution.
+  - "Spot": Measures a small area (about 3%) in the center of the scene while
+                the rest of the scene is ignored. This mode is used when the
+                scene has a high contrast and the object of interest is relatively
+                small.
+  - "Partial": Measures the light from a larger area (about 11%) in the center
+                of the scene. This mode is used when very dark or bright regions
+                appear at the edge of the frame.
+  - "CenterWeighted"
+  - "HistgramPeak"
+"""
+function autoexposure_metering_mode!(cam::Camera, mode::String)
+  if in(mode, ["Average","Spot","Partial","CenterWeighted","HistgramPeak"])
+    autoexposure_lighting_mode!(cam, "Normal")
+    set!(SpinEnumNode(cam, "AutoExposureMeteringMode"), mode)
+  else
+    @error """Metering mode "$(mode)" not recognized"""
+  end
+end
+
+"""
   framerate(::Camera) -> Float
 
   Camera frame rate.

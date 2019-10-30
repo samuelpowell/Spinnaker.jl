@@ -8,6 +8,7 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        trigger!,
        exposure, exposure!, exposure_limits,
        autoexposure_limits, autoexposure_limits!,
+       autoexposure_metering_mode!, autoexposure_lighting_mode!,
        framerate, framerate!, framerate_limits,
        gain, gain!, gain_limits,
        adcbits, adcbits!,
@@ -38,7 +39,7 @@ mutable struct Camera
     names = Dict{String, String}()
     cam = new(handle, names)
     finalizer(_release!, cam)
-    
+
     # Activate chunk mode
     set!(SpinBooleanNode(cam, "ChunkModeActive"), true)
     _chunkselect(cam, ["FrameID", "FrameCounter"], "frame indentification")
@@ -49,7 +50,7 @@ mutable struct Camera
     cam.names["AutoExposureTimeLowerLimit"] = "AutoExposureTimeLowerLimit"
     cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureTimeUpperLimit"
     cam.names["AcquisitionFrameRateEnabled"] = "AcquisitionFrameRateEnabled"
-        
+
     try
       Spinnaker.get(Spinnaker.SpinFloatNode(cam, "AutoExposureTimeLowerLimit"))
     catch
@@ -75,7 +76,7 @@ function _chunkselect(cam::Camera, chunknames::Vector{String}, desc::String)
   fail = true
   i = 1
   while fail == true
-    try 
+    try
       fail = false
       set!(SpinEnumNode(cam, "ChunkSelector"), chunknames[i])
       set!(SpinBooleanNode(cam, "ChunkEnable"), true)
@@ -248,7 +249,7 @@ end
   format, and thus the array will be in the range [0,1].
 
   To return images compatible with Images.jl, one can request a Gray value, e.g.,
-  `getimage!(cam, Gray{N0f8}, normalize=true)`. 
+  `getimage!(cam, Gray{N0f8}, normalize=true)`.
 
   Function also returns image ID and timestamp metadata.
 """
