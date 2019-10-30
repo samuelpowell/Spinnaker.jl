@@ -153,7 +153,7 @@ end
 
   Change autoexposure lighting mode.
   Options:
-  - "AutoDetect":
+  - "AutoDetect": Automatically detect
   - "Backlight": Used when a strong light is coming from the back of the object.
   - "Frontlight": Used when a strong light is shining in the front of the object
                   while the background is dark.
@@ -170,7 +170,7 @@ end
 """
   autoexposure_metering_mode!(::Camera)
 
-  Change to "Normal" lighting mode and set the autoexposure metering mode.
+  Change autoexposure lighting mode to "Normal" and set the autoexposure metering mode.
   Options:
   - "Average": Measures the light from the entire scene uniformly to determine
                 the final exposure value. Every portion of the exposed area has
@@ -182,8 +182,8 @@ end
   - "Partial": Measures the light from a larger area (about 11%) in the center
                 of the scene. This mode is used when very dark or bright regions
                 appear at the edge of the frame.
-  - "CenterWeighted"
-  - "HistgramPeak"
+  - "CenterWeighted": (No SDK docs)
+  - "HistgramPeak": (No SDK docs)
 """
 function autoexposure_metering_mode!(cam::Camera, mode::String)
   if in(mode, ["Average","Spot","Partial","CenterWeighted","HistgramPeak"])
