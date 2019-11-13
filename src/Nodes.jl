@@ -122,13 +122,15 @@ function range(node::SpinFloatNode)
   return (hMin[], hMax[])
 end
 
-function set!(node::SpinFloatNode, value::Number)
+function set!(node::SpinFloatNode, value::Number; clampwarn::Bool = true)
   if !writable(node.hNode)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
   noderange = range(node)
-  value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
-  value > noderange[2] && @warn "Requested value ($value) is greater than maximum ($(noderange[2])), value will be clamped."
+  if clampwarn
+    value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
+    value > noderange[2] && @warn "Requested value ($value) is greater than maximum ($(noderange[2])), value will be clamped."
+  end
   spinFloatSetValue(node.hNode[], Float64(clamp(value, noderange[1], noderange[2])))
   get(node)  
 end
