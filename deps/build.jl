@@ -27,18 +27,22 @@ function find_spinnaker()
 end
 
 function configure()
+  depsfile = joinpath(@__DIR__, "deps.jl")
+  isfile(depsfile) && rm(depsfile)
 
   path, libspinnaker, libspinvideo = find_spinnaker()
   libSpinnaker_C = find_library(libspinnaker,[path])
   libSpinVideo_C = find_library(libspinvideo,[path])
 
-  libSpinnaker_C != "" || @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
-
-  open(joinpath(@__DIR__, "deps.jl"), "w") do f
-    write(f, """
-      const libSpinnaker_C = \"$(libSpinnaker_C)\"
-      const libSpinVideo_C = \"$(libSpinVideo_C)\"
-    """)
+  if libSpinnaker_C != ""
+    open(depsfile, "w") do f
+      write(f, """
+        const libSpinnaker_C = \"$(libSpinnaker_C)\"
+        const libSpinVideo_C = \"$(libSpinVideo_C)\"
+      """)
+    end
+  else
+      @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
   end
 
 end
