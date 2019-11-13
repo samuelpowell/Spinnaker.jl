@@ -14,7 +14,7 @@ export System, Camera, CameraList
 try
   include(joinpath(@__DIR__, "..", "deps", "deps.jl"))
 catch
-  error("Package configuration file missing, run 'Pkg.build(\"Spinnaker\")' to configure.")
+  @error "Package configuration file missing, run 'Pkg.build(\"Spinnaker\")' to configure."
 end
 
 const MAX_BUFFER_LEN = Csize_t(1023)
@@ -52,7 +52,12 @@ include("Nodes.jl")
 
 # Create a System object at runtime
 function __init__()
-  global spinsys = System()
+  try
+    global spinsys = System()
+  catch ex
+    # don't actually fail to keep the package loadable
+    @error "Spinnaker.jl failed to initialize" exception=(ex, catch_backtrace())
+  end
 end
 
 end # module

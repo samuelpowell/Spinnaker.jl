@@ -32,7 +32,7 @@ function configure()
   libSpinnaker_C = find_library(libspinnaker,[path])
   libSpinVideo_C = find_library(libspinvideo,[path])
 
-  libSpinnaker_C != "" || @error "Spinnaker SDK cannot be found"
+  libSpinnaker_C != "" || @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
 
   open(joinpath(@__DIR__, "deps.jl"), "w") do f
     write(f, """
