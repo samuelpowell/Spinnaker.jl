@@ -128,13 +128,15 @@ end
 exposure_limits(cam::Camera) = range(SpinFloatNode(cam, "ExposureTime"))
 
 """
-  autoexposure_limits!(::Camera, (lower, upper)) -> (Float, Float)
+  autoexposure_limits!(::Camera, (lower, upper); clampwarn=true) -> (Float, Float)
 
   Write lower and upper limits of the Auto Exposure Time (us) value.
+  Values exceeding range are clamped to the allowable extrema and returned, and
+  a warning is given, which can be disabled with `clampwarn=false`.
 """
-function autoexposure_limits!(cam::Camera, lims)
-  set!(SpinFloatNode(cam, cam.names["AutoExposureTimeLowerLimit"]), lims[1])
-  set!(SpinFloatNode(cam, cam.names["AutoExposureTimeUpperLimit"]), lims[2])
+function autoexposure_limits!(cam::Camera, lims; clampwarn=true)
+  set!(SpinFloatNode(cam, cam.names["AutoExposureTimeLowerLimit"]), lims[1], clampwarn=clampwarn)
+  set!(SpinFloatNode(cam, cam.names["AutoExposureTimeUpperLimit"]), lims[2], clampwarn=clampwarn)
   autoexposure_limits(cam)
 end
 
