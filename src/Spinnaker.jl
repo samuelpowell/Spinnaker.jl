@@ -56,7 +56,7 @@ include("Nodes.jl")
 # Create a System object at runtime
 function __init__()
   if !functional()
-    @error "Package configuration file missing, run 'Pkg.build(\"Spinnaker\")' to configure."
+    @error """Package configuration file missing, run 'Pkg.build(\"Spinnaker\")' to configure, or `Pkg.build(\"Spinnaker\", verbose=true)` to debug."""
     return
   end
   try
