@@ -10,15 +10,9 @@ import Base: unsafe_convert, show, length, getindex, size, convert, range
 
 export System, Camera, CameraList
 
-const __built__ = Ref(false)
-functional() = __built__[]
-
 # Include build configuration
 const depsfile = joinpath(@__DIR__, "..", "deps", "deps.jl")
-if isfile(depsfile)
-  include(depsfile)
-  __built__[] = true
-end
+isfile(depsfile) && include(depsfile)
 
 const MAX_BUFFER_LEN = Csize_t(1023)
 
@@ -55,9 +49,9 @@ include("Nodes.jl")
 
 # Create a System object at runtime
 function __init__()
-  if !functional()
-    @error """Package configuration file missing, run 'Pkg.build(\"Spinnaker\")' to configure, or `Pkg.build(\"Spinnaker\", verbose=true)` to debug."""
-    return
+  if !isfile(depsfile)
+    @error """Package configuration file missing, run ']build Spinnaker' to configure, or `using Pkg;Pkg.build(\"Spinnaker\", verbose=true)` to debug."""
+    return nothing
   end
   try
     global spinsys = System()
