@@ -5,14 +5,28 @@ module Spinnaker
 
 using FixedPointNumbers
 
-import Libdl
+using Libdl
 import Base: unsafe_convert, show, length, getindex, size, convert, range
 
 export System, Camera, CameraList
 
-# Include build configuration
-const depsfile = joinpath(@__DIR__, "..", "deps", "deps.jl")
-isfile(depsfile) && include(depsfile)
+@static if Sys.iswindows()
+  path = joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")
+  libspinnaker = "SpinnakerC_v140.dll"
+  libspinvideo = ""
+elseif Sys.islinux()
+  path = "/usr/lib"
+  libspinnaker = "libSpinnaker_C.so"
+  libspinvideo = "libSpinVideo_C.so"
+elseif Sys.isapple()
+  path = "/usr/local/lib"
+  libspinnaker = "libSpinnaker_C.dylib"
+  libspinvideo = "libSpinVideo_C.dylib"
+else
+  @error "Spinnaker SDK only supported on Linux, Windows and MacOS platforms"
+end
+const libSpinnaker_C = joinpath(path, libspinnaker)
+const libSpinVideo_C = joinpath(path, libspinvideo)
 
 const MAX_BUFFER_LEN = Csize_t(1023)
 
@@ -49,15 +63,20 @@ include("Nodes.jl")
 
 # Create a System object at runtime
 function __init__()
-  if !isfile(depsfile)
-    @error """Package configuration file missing, run ']build Spinnaker' to configure, or `using Pkg;Pkg.build(\"Spinnaker\", verbose=true)` to debug."""
-    return nothing
+  libSpinnaker_C_handle = dlopen(libSpinnaker_C)
+  libSpinVideo_C_handle = dlopen(libSpinVideo_C)
+
+  if libSpinnaker_C_handle == C_NULL || libSpinVideo_C_handle == C_NULL
+    @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
   end
+  
   try
     global spinsys = System()
   catch ex
+    bt = catch_backtrace()
     # don't actually fail to keep the package loadable
-    error("Spinnaker.jl failed to initialize", exception=(ex, catch_backtrace()))
+    @error "Spinnaker.jl failed to initialize"
+    showerror(stderr, ex, bt)
   end
 end
 
