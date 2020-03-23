@@ -10,23 +10,9 @@ import Base: unsafe_convert, show, length, getindex, size, convert, range
 
 export System, Camera, CameraList
 
-@static if Sys.iswindows()
-  path = joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")
-  libspinnaker = "SpinnakerC_v140.dll"
-  libspinvideo = ""
-elseif Sys.islinux()
-  path = "/usr/lib"
-  libspinnaker = "libSpinnaker_C.so"
-  libspinvideo = "libSpinVideo_C.so"
-elseif Sys.isapple()
-  path = "/usr/local/lib"
-  libspinnaker = "libSpinnaker_C.dylib"
-  libspinvideo = "libSpinVideo_C.dylib"
-else
-  @error "Spinnaker SDK only supported on Linux, Windows and MacOS platforms"
-end
-const libSpinnaker_C = joinpath(path, libspinnaker)
-const libSpinVideo_C = joinpath(path, libspinvideo)
+# Include build configuration
+const depsfile = joinpath(@__DIR__, "..", "deps", "deps.jl")
+isfile(depsfile) && include(depsfile)
 
 const MAX_BUFFER_LEN = Csize_t(1023)
 
@@ -63,19 +49,27 @@ include("Nodes.jl")
 
 # Create a System object at runtime
 function __init__()
-  libSpinnaker_C_handle = dlopen(libSpinnaker_C)
-  libSpinVideo_C_handle = dlopen(libSpinVideo_C)
-
-  if libSpinnaker_C_handle == C_NULL || libSpinVideo_C_handle == C_NULL
-    @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
+  if (!@isdefined libSpinnaker_C) || (!@isdefined libSpinVideo_C) 
+    @error "Spinnaker build configuration not found. Try to rebuild with `]build Spinnaker`"
+    return
   end
-  
+  if !isfile(libSpinnaker_C) || !isfile(libSpinVideo_C)
+    @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
+    return 
+  end
+  try
+    usb = dlopen("/usr/local/lib/libusb-1.0.0.dylib")
+    libSpinnaker_C_handle = dlopen(libSpinnaker_C)
+    libSpinVideo_C_handle = dlopen(libSpinVideo_C)
+  catch err
+    @error "Spinnaker SDK cannot be dlopen-ed. This package can be loaded, but will not be functional."
+    return
+  end
   try
     global spinsys = System()
   catch ex
     bt = catch_backtrace()
-    # don't actually fail to keep the package loadable
-    @error "Spinnaker.jl failed to initialize"
+    @error "Spinnaker.jl failed to initialize" # don't actually fail to keep the package loadable
     showerror(stderr, ex, bt)
   end
 end
