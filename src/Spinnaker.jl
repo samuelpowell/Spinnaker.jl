@@ -10,9 +10,23 @@ import Base: unsafe_convert, show, length, getindex, size, convert, range
 
 export System, Camera, CameraList
 
-# Include build configuration
-const depsfile = joinpath(@__DIR__, "..", "deps", "deps.jl")
-isfile(depsfile) && include(depsfile)
+@static if Sys.iswindows()
+  path = joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")
+  libspinnaker = "SpinnakerC_v140.dll"
+  libspinvideo = ""
+elseif Sys.islinux()
+  path = "/usr/lib"
+  libspinnaker = "libSpinnaker_C.so"
+  libspinvideo = "libSpinVideo_C.so"
+elseif Sys.isapple()
+  path = "/usr/local/lib"
+  libspinnaker = "libSpinnaker_C.dylib"
+  libspinvideo = "libSpinVideo_C.dylib"
+end
+if (@isdefined libspinnaker) && (@isdefined libspinvideo) 
+  const libSpinnaker_C = joinpath(path, libspinnaker)
+  const libSpinVideo_C = joinpath(path, libspinvideo)
+end
 
 const MAX_BUFFER_LEN = Csize_t(1023)
 
@@ -50,26 +64,26 @@ include("Nodes.jl")
 # Create a System object at runtime
 function __init__()
   if (!@isdefined libSpinnaker_C) || (!@isdefined libSpinVideo_C) 
-    @error "Spinnaker build configuration not found. Try to rebuild with `]build Spinnaker`"
+    @error "Spinnaker SDK only supported on Linux, Windows and MacOS platforms"
     return
   end
-  if !isfile(libSpinnaker_C) || !isfile(libSpinVideo_C)
+  if !isfile(libSpinnaker_C)
     @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
     return 
   end
   try
-    usb = dlopen("/usr/local/lib/libusb-1.0.0.dylib")
     libSpinnaker_C_handle = dlopen(libSpinnaker_C)
-    libSpinVideo_C_handle = dlopen(libSpinVideo_C)
-  catch err
-    @error "Spinnaker SDK cannot be dlopen-ed. This package can be loaded, but will not be functional."
-    return
+    !Sys.iswindows() && (libSpinVideo_C_handle = dlopen(libSpinVideo_C))
+  catch ex
+    bt = catch_backtrace()
+    @error "Spinnaker SDK cannot be dlopen-ed"
+    showerror(stderr, ex, bt)
   end
   try
     global spinsys = System()
   catch ex
     bt = catch_backtrace()
-    @error "Spinnaker.jl failed to initialize" # don't actually fail to keep the package loadable
+    @error "Spinnaker SDK loaded but Spinnaker.jl failed to initialize"
     showerror(stderr, ex, bt)
   end
 end
