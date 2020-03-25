@@ -23,6 +23,10 @@ install and build the package.
 ]add Spinnaker
 ```
 
+NOTE: The official Julia 1.4.0 MacOS binaries appear to have an issue with notarization
+which causes a failure to load the dynamic libraries. Whilst this is being resolved, either
+use a previous version, or the fix detailed [here](https://github.com/samuelpowell/Spinnaker.jl/pull/63#issuecomment-602821121).
+
 ## Graphical user interface
 
 [SpinnakerGUI.jl](https://github.com/ianshmean/SpinnakerGUI.jl) by @ianshmean uses
