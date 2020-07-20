@@ -4,14 +4,28 @@
 # Node.jl: helper function to access interface to Camera nodes
 
 # Utility functions
-function available(name, hNode)
-  pbAvailable = Ref(bool8_t(false))
+function implemented(name, hNode)
+  pbImplemented = Ref(bool8_t(false))
   try
-    spinNodeIsAvailable(hNode[], pbAvailable)
+    spinNodeIsImplemented(hNode[], pbImplemented)
   catch err
-    error("Node handle invalid for $(name)\n$err")
+    if startswith(err, "Spinnaker SDK error: SPINNAKER_ERR_INVALID_HANDLE(-1006)")
+      error(ErrorException("Node $(name) does not have a valid handle\n$err"))
+    else
+      throw(err)
+    end
   end
-  return (pbAvailable[] == 1)
+  return (pbImplemented[] == 1)
+end
+
+function available(name, hNode)
+  if implemented(name, hNode)
+    pbAvailable = Ref(bool8_t(false))
+    spinNodeIsAvailable(hNode[], pbAvailable)
+    return (pbAvailable[] == 1)
+  else
+    throw(ErrorException("Node $(name) is not implemented"))
+  end
 end
 
 function readable(name, hNode)
