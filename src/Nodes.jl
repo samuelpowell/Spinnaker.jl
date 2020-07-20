@@ -6,6 +6,7 @@
 # Utility functions
 function available(node)
   pbAvailable = Ref(bool8_t(false))
+  @show node.name
   try
     spinNodeIsAvailable(node.hNode[], pbAvailable)
   catch err
