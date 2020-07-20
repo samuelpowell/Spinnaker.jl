@@ -27,7 +27,7 @@ end
 function writable(node)
   if available(node)
    pbWriteable = Ref(bool8_t(false))
-   spinNodeIsReadable(node.hNode[], pbWriteable)
+   spinNodeIsWritable(node.hNode[], pbWriteable)
    return (pbWriteable[] == 1)
  else
    return false
