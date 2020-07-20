@@ -6,7 +6,6 @@
 # Utility functions
 function available(node)
   pbAvailable = Ref(bool8_t(false))
-  @show node.name
   try
     spinNodeIsAvailable(node.hNode[], pbAvailable)
   catch err
@@ -182,7 +181,7 @@ function set!(node::SpinEnumNode, value)
   spinEnumerationGetEntryByName(node.hNode[], value, hNodeEntry)
 
   # Get integer value from string
-  if !readable(hNodeEntry)
+  if !readable(SpinEnumNode(node.name, hNodeEntry))
     throw(ErrorException("Node $(node.name) entry is not readable"))
   end
   spinEnumerationEntryGetIntValue(hNodeEntry[], hNodeVal)
