@@ -4,26 +4,30 @@
 # Node.jl: helper function to access interface to Camera nodes
 
 # Utility functions
-function available(nodeName)
+function available(node)
   pbAvailable = Ref(bool8_t(false))
-  spinNodeIsAvailable(nodeName[], pbAvailable)
+  try
+    spinNodeIsAvailable(node.hNode[], pbAvailable)
+  catch
+    error("Node handle invalid for $(node.name)")
+  end
   return (pbAvailable[] == 1)
 end
 
-function readable(nodeName)
-  if available(nodeName)
+function readable(node)
+  if available(node)
    pbReadable = Ref(bool8_t(false))
-   spinNodeIsReadable(nodeName[], pbReadable)
+   spinNodeIsReadable(node.hNode[], pbReadable)
    return (pbReadable[] == 1)
  else
    return false
  end
 end
 
-function writable(nodeName)
-  if available(nodeName)
+function writable(node)
+  if available(node)
    pbWriteable = Ref(bool8_t(false))
-   spinNodeIsReadable(nodeName[], pbWriteable)
+   spinNodeIsReadable(node.hNode[], pbWriteable)
    return (pbWriteable[] == 1)
  else
    return false
@@ -52,7 +56,7 @@ struct SpinStringNode <: AbstractSpinNode
 end
 
 function get(node::SpinStringNode)
-  if !readable(node.hNode)
+  if !readable(node)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
   strbuf = Vector{UInt8}(undef, MAX_BUFFER_LEN)
@@ -81,7 +85,7 @@ function range(node::SpinIntegerNode)
 end
 
 function set!(node::SpinIntegerNode, value::Number; clampwarn::Bool = true)
-  if !writable(node.hNode)
+  if !writable(node)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
   noderange = range(node)
@@ -94,7 +98,7 @@ function set!(node::SpinIntegerNode, value::Number; clampwarn::Bool = true)
 end
 
 function get(node::SpinIntegerNode)
-  if !readable(node.hNode)
+  if !readable(node)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
   hval = Ref(Int64(0))
@@ -123,7 +127,7 @@ function range(node::SpinFloatNode)
 end
 
 function set!(node::SpinFloatNode, value::Number; clampwarn::Bool = true)
-  if !writable(node.hNode)
+  if !writable(node)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
   noderange = range(node)
@@ -136,7 +140,7 @@ function set!(node::SpinFloatNode, value::Number; clampwarn::Bool = true)
 end
 
 function get(node::SpinFloatNode)
-  if !readable(node.hNode)
+  if !readable(node)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
   hval = Ref(Float64(0))
@@ -157,7 +161,7 @@ struct SpinEnumNode <: AbstractSpinNode
 end
 
 function get(node::SpinEnumNode)
-  if !readable(node.hNode)
+  if !readable(node)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
   hNodeEntry = Ref(spinNodeHandle(C_NULL))
@@ -169,7 +173,7 @@ function get(node::SpinEnumNode)
 end
 
 function set!(node::SpinEnumNode, value)
-  if !readable(node.hNode)
+  if !readable(node)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
   hNodeEntry = Ref(spinNodeHandle(C_NULL))
@@ -183,7 +187,7 @@ function set!(node::SpinEnumNode, value)
   spinEnumerationEntryGetIntValue(hNodeEntry[], hNodeVal)
 
   # Set value
-  if !writable(node.hNode)
+  if !writable(node)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
   spinEnumerationSetIntValue(node.hNode[], hNodeVal[])
@@ -204,7 +208,7 @@ struct SpinBooleanNode <: AbstractSpinNode
 end
 
 function get(node::SpinBooleanNode)
-  if !readable(node.hNode)
+  if !readable(node)
     throw(ErrorException("Node $(node.name) is not readable"))
   end
   hval = Ref(bool8_t(0))
@@ -213,7 +217,7 @@ function get(node::SpinBooleanNode)
 end
 
 function set!(node::SpinBooleanNode, value::Bool)
-  if !writable(node.hNode)
+  if !writable(node)
     throw(ErrorException("Node $(node.name) is not writable"))
   end
   spinBooleanSetValue(node.hNode[], value)
