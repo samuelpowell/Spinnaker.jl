@@ -8,8 +8,8 @@ function available(node)
   pbAvailable = Ref(bool8_t(false))
   try
     spinNodeIsAvailable(node.hNode[], pbAvailable)
-  catch
-    error("Node handle invalid for $(node.name)")
+  catch err
+    error("Node handle invalid for $(node.name)\n$err")
   end
   return (pbAvailable[] == 1)
 end
