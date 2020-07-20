@@ -24,7 +24,7 @@ function readable(name, hNode)
  end
 end
 
-function writable(node.name, node.hNode)
+function writable(name, hNode)
   if available(name, hNode)
    pbWriteable = Ref(bool8_t(false))
    spinNodeIsWritable(node.hNode[], pbWriteable)
