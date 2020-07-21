@@ -9,8 +9,8 @@ function implemented(name, hNode)
   try
     spinNodeIsImplemented(hNode[], pbImplemented)
   catch err
-    if startswith(err, "Spinnaker SDK error: SPINNAKER_ERR_INVALID_HANDLE(-1006)")
-      error(ErrorException("Node $(name) does not have a valid handle\n$err"))
+    if occursin("SPINNAKER_ERR_INVALID_HANDLE(-1006)", "$err")
+      throw(ErrorException("Node $(name) does not have a valid handle\n$err"))
     else
       throw(err)
     end
