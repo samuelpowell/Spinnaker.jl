@@ -73,7 +73,7 @@ function __init__()
   end
   try
     libSpinnaker_C_handle = dlopen(libSpinnaker_C)
-    !Sys.iswindows() && (libSpinVideo_C_handle = dlopen(libSpinVideo_C))
+    #!Sys.iswindows() && (libSpinVideo_C_handle = dlopen(libSpinVideo_C))
   catch ex
     bt = catch_backtrace()
     @error "Spinnaker SDK cannot be dlopen-ed"
