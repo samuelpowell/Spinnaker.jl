@@ -15,7 +15,8 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        pixelformat, pixelformat!,
        acquisitionmode, acquisitionmode!,
        sensordims, imagedims, imagedims!, imagedims_limits, offsetdims, offsetdims!, offsetdims_limits,
-       buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed
+       buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed,
+       reset!
 
 """
  Spinnaker SDK Camera object
@@ -112,6 +113,20 @@ function _release!(cam::Camera)
     cam.handle = C_NULL
   end
   return nothing
+end
+
+"""
+  reset!(cam::Camera)
+
+Immediately reset and reboot the camera.
+"""
+function reset!(cam::Camera)
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hDeviceReset = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], "DeviceReset", hDeviceReset);
+  spinCommandExecute(hDeviceReset[])
 end
 
 # Include subfiles
