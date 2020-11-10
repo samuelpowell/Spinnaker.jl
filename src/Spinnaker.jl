@@ -10,23 +10,8 @@ import Base: unsafe_convert, show, length, getindex, size, convert, range
 
 export System, Camera, CameraList
 
-@static if Sys.iswindows()
-  path = joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")
-  libspinnaker = "SpinnakerC_v140.dll"
-  libspinvideo = ""
-elseif Sys.islinux()
-  path = "/usr/lib"
-  libspinnaker = "libSpinnaker_C.so"
-  libspinvideo = "libSpinVideo_C.so"
-elseif Sys.isapple()
-  path = "/usr/local/lib"
-  libspinnaker = "libSpinnaker_C.dylib"
-  libspinvideo = "libSpinVideo_C.dylib"
-end
-if (@isdefined libspinnaker) && (@isdefined libspinvideo) 
-  const libSpinnaker_C = joinpath(path, libspinnaker)
-  const libSpinVideo_C = joinpath(path, libspinvideo)
-end
+const libSpinnaker_C = Ref{String}("")
+const libSpinVideo_C = Ref{String}("")
 
 const MAX_BUFFER_LEN = Csize_t(1023)
 
@@ -63,17 +48,40 @@ include("Nodes.jl")
 
 # Create a System object at runtime
 function __init__()
-  if (!@isdefined libSpinnaker_C) || (!@isdefined libSpinVideo_C) 
+  @static if Sys.iswindows()
+    paths = [joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")]
+    libspinnaker = "SpinnakerC_v140.dll"
+    libspinvideo = ""
+  elseif Sys.islinux()
+    paths = ["/usr/lib" "/opt/spinnaker/lib"]
+    libspinnaker = "libSpinnaker_C.so"
+    libspinvideo = "libSpinVideo_C.so"
+  elseif Sys.isapple()
+    paths = ["/usr/local/lib"]
+    libspinnaker = "libSpinnaker_C.dylib"
+    libspinvideo = "libSpinVideo_C.dylib"
+  else
     @error "Spinnaker SDK only supported on Linux, Windows and MacOS platforms"
     return
   end
-  if !isfile(libSpinnaker_C)
+  libSpinnaker_C_path = ""
+  libSpinVideo_C_path = ""
+  for path in paths
+    libSpinnaker_C_path = joinpath(path, libspinnaker)
+    libSpinVideo_C_path = joinpath(path, libspinvideo)
+    if isfile(libSpinnaker_C_path) && isfile(libSpinVideo_C_path)
+      libSpinnaker_C[] = libSpinnaker_C_path
+      libSpinVideo_C[] = libSpinVideo_C_path
+    end
+  end
+
+  if libSpinnaker_C[] == "" || libSpinVideo_C[] == ""
     @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
-    return 
+    return
   end
   try
-    libSpinnaker_C_handle = dlopen(libSpinnaker_C)
-    !Sys.iswindows() && (libSpinVideo_C_handle = dlopen(libSpinVideo_C))
+    libSpinnaker_C_handle = dlopen(libSpinnaker_C[])
+    !Sys.iswindows() && (libSpinVideo_C_handle = dlopen(libSpinVideo_C[]))
   catch ex
     bt = catch_backtrace()
     @error "Spinnaker SDK cannot be dlopen-ed"

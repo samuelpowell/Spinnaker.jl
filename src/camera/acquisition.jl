@@ -174,7 +174,10 @@ framerate!(cam::Camera) = set!(SpinEnumNode(cam, "AcquisitionFrameRateAuto"), "C
   is returned.
 """
 function framerate!(cam::Camera, fps)
-  set!(SpinEnumNode(cam, "AcquisitionFrameRateAuto"), "Off")
+  try
+    set!(SpinEnumNode(cam, "AcquisitionFrameRateAuto"), "Off")
+  catch e
+  end
   set!(SpinBooleanNode(cam, cam.names["AcquisitionFrameRateEnabled"]), true)
   set!(SpinFloatNode(cam, "AcquisitionFrameRate"), fps)
 end

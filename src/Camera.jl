@@ -15,7 +15,8 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        pixelformat, pixelformat!,
        acquisitionmode, acquisitionmode!,
        sensordims, imagedims, imagedims!, imagedims_limits, offsetdims, offsetdims!, offsetdims_limits,
-       buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed
+       buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed,
+       reset!
 
 """
  Spinnaker SDK Camera object
@@ -38,7 +39,7 @@ mutable struct Camera
     names = Dict{String, String}()
     cam = new(handle, names)
     finalizer(_release!, cam)
-    
+
     # Activate chunk mode
     set!(SpinBooleanNode(cam, "ChunkModeActive"), true)
     _chunkselect(cam, ["FrameID", "FrameCounter"], "frame indentification")
@@ -49,7 +50,7 @@ mutable struct Camera
     cam.names["AutoExposureTimeLowerLimit"] = "AutoExposureTimeLowerLimit"
     cam.names["AutoExposureTimeUpperLimit"] = "AutoExposureTimeUpperLimit"
     cam.names["AcquisitionFrameRateEnabled"] = "AcquisitionFrameRateEnabled"
-        
+
     try
       Spinnaker.get(Spinnaker.SpinFloatNode(cam, "AutoExposureTimeLowerLimit"))
     catch
@@ -75,7 +76,7 @@ function _chunkselect(cam::Camera, chunknames::Vector{String}, desc::String)
   fail = true
   i = 1
   while fail == true
-    try 
+    try
       fail = false
       set!(SpinEnumNode(cam, "ChunkSelector"), chunknames[i])
       set!(SpinBooleanNode(cam, "ChunkEnable"), true)
@@ -112,6 +113,20 @@ function _release!(cam::Camera)
     cam.handle = C_NULL
   end
   return nothing
+end
+
+"""
+  reset!(cam::Camera)
+
+Immediately reset and reboot the camera.
+"""
+function reset!(cam::Camera)
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hDeviceReset = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], "DeviceReset", hDeviceReset);
+  spinCommandExecute(hDeviceReset[])
 end
 
 # Include subfiles
@@ -248,7 +263,7 @@ end
   format, and thus the array will be in the range [0,1].
 
   To return images compatible with Images.jl, one can request a Gray value, e.g.,
-  `getimage!(cam, Gray{N0f8}, normalize=true)`. 
+  `getimage!(cam, Gray{N0f8}, normalize=true)`.
 
   Function also returns image ID and timestamp metadata.
 """
