@@ -8,7 +8,7 @@ Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
 [compat]
 julia = "0.7, 1"
-FixedPointNumbers = "^0.6.0"
+FixedPointNumbers = "0.6, 0.7, 0.8"
 
 [extras]
 ImageCore = "a09fc81d-aa75-5fe9-8630-4744c3626534"
