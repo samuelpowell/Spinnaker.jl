@@ -5,11 +5,11 @@ function is_ci()
     get(ENV, "CI", "") in ("true", "True")
 end
 
+using Spinnaker
+
 if is_ci()
     @info "CI testing is disabled due to the need for a Spinnaker-compatible camera during tests."
 else
-    using Spinnaker
-
     camlist = CameraList()
     if length(camlist) < 1
         error("""Spinnaker could not find a compatible camera.
