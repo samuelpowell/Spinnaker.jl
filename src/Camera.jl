@@ -8,6 +8,7 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        trigger!,
        exposure, exposure!, exposure_limits,
        autoexposure_limits, autoexposure_limits!,
+       autoexposure_metering_mode!, autoexposure_lighting_mode!,
        framerate, framerate!, framerate_limits,
        gain, gain!, gain_limits,
        adcbits, adcbits!,
