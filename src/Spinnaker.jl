@@ -6,9 +6,9 @@ module Spinnaker
 using FixedPointNumbers
 
 using Libdl
-import Base: unsafe_convert, show, length, getindex, size, convert, range
+import Base: unsafe_convert, show, length, getindex, size, convert, range, showerror
 
-export System, Camera, CameraList
+export System, Camera, CameraList, SpinError
 
 const libSpinnaker_C = Ref{String}("")
 const libSpinVideo_C = Ref{String}("")
@@ -21,9 +21,14 @@ using .CEnum
 
 include("wrapper/spin_common.jl")
 
+struct SpinError <: Exception
+  val::spinError
+end
+showerror(io::IO, ex::SpinError) = print(io, "Spinnaker SDK error: ", ex.val)
+
 function checkerror(err::spinError)
   if err != spinError(0)
-    throw(ErrorException("Spinnaker SDK error: $err"))
+    throw(SpinError(err))
   end
   return nothing
 end
