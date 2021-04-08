@@ -116,18 +116,44 @@ function _release!(cam::Camera)
 end
 
 """
-  reset!(cam::Camera)
+  isinitialized(cam::Camera) -> Bool
+
+Determine if the camera is initialized.
+"""
+function isinitialized(cam::Camera)
+  pbIsInitialized = Ref(bool8_t(false))
+  spinCameraIsInitialized(cam, pbIsInitialized)
+  return (pbIsInitialized[] == 0x01)
+end
+
+"""
+  reset!(cam::Camera; wait_init = false, timeout = nothing)
 
 Immediately reset and reboot the camera.
+Wait for reinitialization by setting `wait_init` to `true`, and a maximum timeout in seconds via
+`timeout`.
 """
-function reset!(cam::Camera)
+function reset!(cam::Camera; wait_init = false, timeout = nothing)
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
+
+  timeout_secs = isnothing(timeout) ? get(SpinIntegerNode(cam, "MaxDeviceResetTime")) / 1e3 : timeout
 
   hDeviceReset = Ref(spinNodeHandle(C_NULL))
   spinNodeMapGetNode(hNodeMap[], "DeviceReset", hDeviceReset);
   spinCommandExecute(hDeviceReset[])
+
+  if wait_init
+    timeout_timer = Timer(timeout_secs)
+    while !isinitialized(cam) && isopen(timeout_timer)
+      sleep(0.25)
+    end
+    isopen(timeout_timer) || error("Camera not reinitialized after MaxDeviceResetTime of $(timeout_secs) seconds.")
+  end
+
 end
+
+
 
 # Include subfiles
 include(joinpath("camera", "acquisition.jl"))
