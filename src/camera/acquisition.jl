@@ -164,7 +164,7 @@ end
 """
   autoexposure_control_priority(cam::Camera)
 
-  Get the auto-exposure control priority. One of `"Gain"`, `"Exposure"`.
+  Get the auto-exposure control priority. One of `"Gain"`, `"ExposureTime"`.
   See Spinnaker SDK docs section 12.6.2.6 `enum AutoExposureControlPriorityEnums` for more information.
 """
 function autoexposure_control_priority(cam::Camera)
