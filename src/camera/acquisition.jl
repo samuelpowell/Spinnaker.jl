@@ -151,6 +151,27 @@ function autoexposure_limits(cam::Camera)
 end
 
 """
+  autoexposure_control_priority!(cam::Camera, priority)
+
+  Select whether to adjust gain or exposure first. `priority` can be one of `"Gain"`, `"ExposureTime"`.
+  See Spinnaker SDK docs section 12.6.2.6 `enum AutoExposureControlPriorityEnums` for more information.
+"""
+function autoexposure_control_priority!(cam::Camera, priority)
+  set!(SpinEnumNode(cam, "AutoExposureControlPriority"), priority)
+  autoexposure_control_priority(cam)
+end
+
+"""
+  autoexposure_control_priority(cam::Camera)
+
+  Get the auto-exposure control priority. One of `"Gain"`, `"Exposure"`.
+  See Spinnaker SDK docs section 12.6.2.6 `enum AutoExposureControlPriorityEnums` for more information.
+"""
+function autoexposure_control_priority(cam::Camera)
+  get(SpinEnumNode(cam, "AutoExposureControlPriority"))
+end
+
+"""
   framerate(::Camera) -> Float
 
   Camera frame rate.
