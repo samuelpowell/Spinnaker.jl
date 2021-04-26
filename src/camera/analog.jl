@@ -34,6 +34,28 @@ end
 """
 gain_limits(cam::Camera) = range(SpinFloatNode(cam,"Gain"))
 
+"""
+  autogain_limits!(::Camera, (lower, upper); clampwarn=true) -> (Float, Float)
+
+  Write lower and upper limits of the Auto Gain Time (us) value.
+  Values exceeding range are clamped to the allowable extrema and returned, and
+  a warning is given, which can be disabled with `clampwarn=false`.
+"""
+function autogain_limits!(cam::Camera, lims; clampwarn=true)
+  set!(SpinFloatNode(cam, "AutoExposureGainLowerLimit"), lims[1], clampwarn=clampwarn)
+  set!(SpinFloatNode(cam, "AutoExposureGainUpperLimit"), lims[2], clampwarn=clampwarn)
+  autogain_limits(cam)
+end
+
+"""
+  autogain_limits(::Camera) -> (Float, Float)
+
+  Lower and upper limits of the Auto Gain Time (us) value.
+"""
+function autogain_limits(cam::Camera)
+  (get(SpinFloatNode(cam, "AutoExposureGainLowerLimit")),
+   get(SpinFloatNode(cam, "AutoExposureGainUpperLimit")))
+end
 
 """
   gammaenable(::Camera) -> Bool
