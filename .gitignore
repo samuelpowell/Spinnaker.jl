@@ -6,3 +6,5 @@ deps/build.log
 examples/wrapper/output/*
 examples/*.png
 Manifest.toml
+.vscode
+
