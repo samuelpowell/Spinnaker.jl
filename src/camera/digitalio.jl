@@ -3,11 +3,6 @@
 
 # camera/digitalio.jl: Camera object digital io features
 
-module DigitalIO
-
-import ..Camera, ..SpinEnumNode, ..SpinBooleanNode
-import ..LineMode_Input, ..LineMode_Output
-
 """
   line_mode(::Camera, state::Symbol)
   Sets the DigitalIO Line Mode. State can either be `:input` or `:output`.
@@ -28,4 +23,3 @@ end
 """
 v3_3_enable(cam::Camera, state::Bool) = set!(SpinBooleanNode(cam, "V3_3Enable"), state)
 
-end #module
