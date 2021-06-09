@@ -5,15 +5,11 @@
 
 """
   line_mode(::Camera, state::Symbol)
-  Sets the DigitalIO Line Mode. State can either be `:input` or `:output`.
+  Sets the DigitalIO Line Mode. State can either be "Input" or "Output"
 """
-function line_mode(cam::Camera, state::Symbol)
-  @assert state in [:input, :output] "State can only be either :input or :output"
-  if state == :input
-    set!(SpinEnumNode(cam, "LineMode"), LineMode_Input)
-  elseif state == :output
-    set!(SpinEnumNode(cam, "LineMode"), LineMode_Output)
-  end
+function line_mode(cam::Camera, state::String)
+  @assert state in ["Input", "Output"] "State can only be either \"Input\" or \"Output\""
+  set!(SpinEnumNode(cam, "LineMode"), state)
   return nothing
 end
 
