@@ -5,6 +5,9 @@
 
 module DigitalIO
 
+import ..Camera, ..SpinEnumNode, ..SpinBooleanNode
+import ..LineMode_Input, ..LineMode_Output
+
 """
   line_mode(::Camera, state::Symbol)
   Sets the DigitalIO Line Mode. State can either be `:input` or `:output`.
