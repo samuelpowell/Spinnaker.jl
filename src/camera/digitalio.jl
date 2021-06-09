@@ -13,7 +13,7 @@ function line_mode(cam::Camera, state::Symbol)
   @assert state in [:input, :output] "State can only be either :input or :output"
   if state == :input
     set!(SpinEnumNode(cam, "LineMode"), LineMode_Input)
-  else if state == :output
+  elseif state == :output
     set!(SpinEnumNode(cam, "LineMode"), LineMode_Output)
   end
   return nothing
