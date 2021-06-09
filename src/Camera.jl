@@ -134,6 +134,7 @@ include(joinpath("camera", "acquisition.jl"))
 include(joinpath("camera", "analog.jl"))
 include(joinpath("camera", "format.jl"))
 include(joinpath("camera", "stream.jl"))
+include(joinpath("camera", "digitalio.jl"))
 
 #
 # Device metadata
