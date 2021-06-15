@@ -174,6 +174,20 @@ function show(io::IO, cam::Camera)
 end
 
 #
+# Device status
+#
+
+"""
+  devicetemperature(cam::Camera, location::String) -> Float
+
+  Return the temperature of the specified device location.
+"""
+function devicetemperature(cam::Camera, location::String)
+  set!(SpinEnumNode(cam, "DeviceTemperatureSelector"), location)
+  return Spinnaker.get(Spinnaker.SpinFloatNode(cam, "DeviceTemperature"))
+end
+
+#
 # Image acquistion
 #
 
