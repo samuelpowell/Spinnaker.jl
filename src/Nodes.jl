@@ -50,7 +50,7 @@ end
 
 function _getnode(cam, name::String, nodemap)
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
-  _nodemap!(cam, hNodeMap, nodemap) 
+  _nodemap!(cam, hNodeMap, nodemap)
   hNode = Ref(spinNodeHandle(C_NULL))
   spinNodeMapGetNode(hNodeMap[], name, hNode);
   return hNode
@@ -60,7 +60,7 @@ abstract type AbstractSpinNode end
 
 
 #
-# String nodes 
+# String nodes
 #
 
 struct SpinStringNode <: AbstractSpinNode
@@ -104,11 +104,11 @@ function set!(node::SpinIntegerNode, value::Number; clampwarn::Bool = true)
   end
   noderange = range(node)
   if clampwarn
-    value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
-    value > noderange[2] && @warn "Requested value ($value) is greater than maximum ($(noderange[2])), value will be clamped."
+    value < noderange[1] && @warn "Requested value ($value) for $(node.name) is smaller than minimum ($(noderange[1])), value will be clamped."
+    value > noderange[2] && @warn "Requested value ($value) for $(node.name) is greater than maximum ($(noderange[2])), value will be clamped."
   end
   spinIntegerSetValue(node.hNode[], Int64(clamp(value, noderange[1], noderange[2])))
-  get(node)  
+  get(node)
 end
 
 function get(node::SpinIntegerNode)
@@ -146,11 +146,11 @@ function set!(node::SpinFloatNode, value::Number; clampwarn::Bool = true)
   end
   noderange = range(node)
   if clampwarn
-    value < noderange[1] && @warn "Requested value ($value) is smaller than minimum ($(noderange[1])), value will be clamped."
-    value > noderange[2] && @warn "Requested value ($value) is greater than maximum ($(noderange[2])), value will be clamped."
+    value < noderange[1] && @warn "Requested value ($value) for $(node.name) is smaller than minimum ($(noderange[1])), value will be clamped."
+    value > noderange[2] && @warn "Requested value ($value) for $(node.name) is greater than maximum ($(noderange[2])), value will be clamped."
   end
   spinFloatSetValue(node.hNode[], Float64(clamp(value, noderange[1], noderange[2])))
-  get(node)  
+  get(node)
 end
 
 function get(node::SpinFloatNode)
@@ -165,7 +165,7 @@ end
 
 
 #
-# Integer enumeration nodes 
+# Integer enumeration nodes
 #
 
 struct SpinEnumNode <: AbstractSpinNode
