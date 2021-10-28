@@ -2,6 +2,9 @@
 # Copyright (C) 2019 Samuel Powell
 
 # CameraList.jl: interface to CameraList objects
+
+export find_cam_with_serial
+
 """
   CameraList(::System)
 
@@ -21,6 +24,21 @@ mutable struct CameraList
     return camlist
   end
 
+end
+
+"""
+  find_cam_with_serial(camlist::CameraList, sn)
+
+Finds and returns a camera with the given serial number, or returns nothing.
+"""
+function find_cam_with_serial(camlist::CameraList, sn)
+  for i in 0:length(camlist)-1
+    cam = camlist[i]
+    if serial(cam) == sn
+      return cam
+    end
+  end
+  return nothing
 end
 
 unsafe_convert(::Type{spinCameraList}, camlist::CameraList) = camlist.handle

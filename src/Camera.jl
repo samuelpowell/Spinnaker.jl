@@ -163,16 +163,6 @@ function reset!(cam::Camera; wait::Bool = false, timeout::Union{Int,Nothing} = n
   return cam
 end
 
-function find_cam_with_serial(camlist::CameraList, sn)
-  for i in 0:length(camlist)-1
-    cam = camlist[i]
-    if serial(cam) == sn
-      return cam
-    end
-  end
-  return nothing
-end
-
 # Include subfiles
 include(joinpath("camera", "acquisition.jl"))
 include(joinpath("camera", "analog.jl"))
