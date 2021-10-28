@@ -116,17 +116,51 @@ function _release!(cam::Camera)
 end
 
 """
-  reset!(cam::Camera)
+  isinitialized(cam::Camera) -> Bool
 
-Immediately reset and reboot the camera.
+Determine if the camera is initialized.
 """
-function reset!(cam::Camera)
+function isinitialized(cam::Camera)
+  pbIsInitialized = Ref(bool8_t(false))
+  spinCameraIsInitialized(cam, pbIsInitialized)
+  return (pbIsInitialized[] == 0x01)
+end
+
+"""
+  reset!(cam::Camera; wait = false, timeout = nothing)
+
+Immediately reset and reboot the camera, after which the camera will need re-initialization via `CameraList`.
+Or to automatically wait to reconnect to a camera with the same serial number set `wait` to `true`, and a maximum
+timeout in seconds via `timeout`.
+"""
+function reset!(cam::Camera; wait::Bool = false, timeout::Union{Int,Nothing} = nothing)
+  # get these before resetting
+  timeout_secs = if wait
+    isnothing(timeout) ? get(SpinIntegerNode(cam, "MaxDeviceResetTime")) / 1e3 : timeout
+  end
+  sn = wait ? serial(cam) : nothing
+
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
 
   hDeviceReset = Ref(spinNodeHandle(C_NULL))
   spinNodeMapGetNode(hNodeMap[], "DeviceReset", hDeviceReset);
   spinCommandExecute(hDeviceReset[])
+
+  if wait
+    timeout = Timer(timeout_secs)
+    while isopen(timeout)
+      try
+        cam = find_cam_with_serial(CameraList(), sn)
+        isnothing(cam) || return cam
+      catch ex
+        @debug "waiting during reset!" exception = ex
+        sleep(0.5)
+      end
+    end
+    isopen(timeout) || error("Spinnaker timed out waiting for the camera with serial number $(sn) to reappear after reset")
+  end
+  return cam
 end
 
 # Include subfiles
