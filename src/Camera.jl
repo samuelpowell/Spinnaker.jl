@@ -130,7 +130,7 @@ end
   reset!(cam::Camera; wait = false, timeout = nothing)
 
 Immediately reset and reboot the camera, after which the camera will need re-initialization via `CameraList`.
-Or to automatically wait to reconnect to a camera with the same serial number set `wait_init` to `true`, and a maximum
+Or to automatically wait to reconnect to a camera with the same serial number set `wait` to `true`, and a maximum
 timeout in seconds via `timeout`.
 """
 function reset!(cam::Camera; wait::Bool = false, timeout::Union{Int,Nothing} = nothing)
