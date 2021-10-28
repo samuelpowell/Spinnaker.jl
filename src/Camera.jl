@@ -127,18 +127,18 @@ function isinitialized(cam::Camera)
 end
 
 """
-  reset!(cam::Camera; wait_reinit = false, timeout = nothing)
+  reset!(cam::Camera; wait = false, timeout = nothing)
 
 Immediately reset and reboot the camera, after which the camera will need re-initialization via `CameraList`.
 Or to automatically wait to reconnect to a camera with the same serial number set `wait_init` to `true`, and a maximum
 timeout in seconds via `timeout`.
 """
-function reset!(cam::Camera; wait_reinit::Bool = false, timeout::Union{Int,Nothing} = nothing)
+function reset!(cam::Camera; wait::Bool = false, timeout::Union{Int,Nothing} = nothing)
   # get these before resetting
-  timeout_secs = if wait_reinit
+  timeout_secs = if wait
     isnothing(timeout) ? get(SpinIntegerNode(cam, "MaxDeviceResetTime")) / 1e3 : timeout
   end
-  sn = wait_reinit ? serial(cam) : nothing
+  sn = wait ? serial(cam) : nothing
 
   hNodeMap = Ref(spinNodeMapHandle(C_NULL))
   spinCameraGetNodeMap(cam, hNodeMap)
@@ -147,21 +147,15 @@ function reset!(cam::Camera; wait_reinit::Bool = false, timeout::Union{Int,Nothi
   spinNodeMapGetNode(hNodeMap[], "DeviceReset", hDeviceReset);
   spinCommandExecute(hDeviceReset[])
 
-  if wait_reinit
+  if wait
     timeout = Timer(timeout_secs)
     while isopen(timeout)
       try
-        camlist = CameraList()
-        for i in 0:length(camlist)-1
-          cam_internal = camlist[i]
-          if serial(cam_internal) == sn
-            cam = cam_internal
-            return cam
-          end
-        end
+        cam = find_cam_with_serial(CameraList(), sn)
+        isnothing(cam) || return cam
       catch ex
         @debug "waiting during reset!" exception = ex
-        sleep(1)
+        sleep(0.5)
       end
     end
     isopen(timeout) || error("Spinnaker timed out waiting for the camera with serial number $(sn) to reappear after reset")
@@ -169,7 +163,15 @@ function reset!(cam::Camera; wait_reinit::Bool = false, timeout::Union{Int,Nothi
   return cam
 end
 
-
+function find_cam_with_serial(camlist::CameraList, sn)
+  for i in 0:length(camlist)-1
+    cam = camlist[i]
+    if serial(cam) == sn
+      return cam
+    end
+  end
+  return nothing
+end
 
 # Include subfiles
 include(joinpath("camera", "acquisition.jl"))
