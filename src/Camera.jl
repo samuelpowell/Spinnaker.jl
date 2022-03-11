@@ -96,6 +96,7 @@ unsafe_convert(::Type{spinCamera}, cam::Camera) = cam.handle
 unsafe_convert(::Type{Ptr{spinCamera}}, cam::Camera) = pointer_from_objref(cam)
 
 function _reinit(cam::Camera)
+  spinCameraEndAcquisition(cam)
   spinCameraDeInit(cam)
   spinCameraInit(cam)
   return cam
@@ -108,6 +109,7 @@ function _release!(cam::Camera)
       stop!(cam)
     catch e
     end
+    spinCameraEndAcquisition(cam)
     spinCameraDeInit(cam)
     spinCameraRelease(cam)
     cam.handle = C_NULL
