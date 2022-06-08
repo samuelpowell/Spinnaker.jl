@@ -97,6 +97,11 @@ function __init__()
   catch ex
     bt = catch_backtrace()
     @error "Spinnaker SDK loaded but Spinnaker.jl failed to initialize"
+    if !haskey(ENV, "FLIR_GENTL64_CTI")
+      @warn "The environment is missing the variable `FLIR_GENTL64_CTI`, which may be the cause of this error. Check that it is set to the path to `FLIR_GenTL.cti` (e.g. `/opt/spinnaker/lib/flir-gentl/FLIR_GenTL.cti`)."
+    elseif !endswith(ENV["FLIR_GENTL64_CTI"], "FLIR_GenTL.cti")
+      @warn "The environment has the variable `FLIR_GENTL64_CTI`, but it does not point to `FLIR_GenTL.cti`, which may be the cause of this error. Check that it is set to the path to `FLIR_GenTL.cti` (e.g. `/opt/spinnaker/lib/flir-gentl/FLIR_GenTL.cti`)."
+    end
     showerror(stderr, ex, bt)
   end
 end
