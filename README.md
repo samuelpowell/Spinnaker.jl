@@ -304,3 +304,41 @@ julia> get(SpinEnumNode(cam, "StreamBufferHandlingMode", CameraTLStreamNodeMap()
 This command creates a reference to the enumeration valued node with the name `StreamBufferHandlingMode` in the _transport steram node map_, and returns the current enuemration selection by its string representation. The available node maps are `CameraNodeMap`, `CameraTLStreamNodeMap`, and `CameraTLDeviceNodeMap`. Node types are defined for enumerations (`SpinEnumNode`), floating point values (`SpinFloatNode`), booleans (`SpinBoolNode`), and integers (`SpinIntegerNode`). Set operations on numeric node types are clamped to the range of the node, and a warning is printed if the desired setting is out of range.
 
 The majority of the high level interface is defined by convenience functions which safely or logically manipualte camera nodes. If you frequently require access to specific nodes, consider creating a high level convenience function for this action, and submitting a PR.
+
+## Troubleshooting
+
+### Spinnaker.jl Cannot Load
+
+If running `using Spinnaker` results in an error similar to this one:
+```julia
+┌ Error: Spinnaker SDK loaded but Spinnaker.jl failed to initialize
+└ @ Spinnaker ~/.julia/packages/Spinnaker/4E5ov/src/Spinnaker.jl:99
+Spinnaker SDK error: SPINNAKER_ERR_ABORT(-1012)
+Stacktrace:
+  [1] checkerror
+    @ ~/.julia/packages/Spinnaker/4E5ov/src/Spinnaker.jl:31 [inlined]
+  [2] spinSystemGetInstance
+    @ ~/.julia/packages/Spinnaker/4E5ov/src/wrapper/spin_api.jl:97 [inlined]
+  [3] Spinnaker.System()
+    @ Spinnaker ~/.julia/packages/Spinnaker/4E5ov/src/System.jl:16
+  [4] __init__()
+    @ Spinnaker ~/.julia/packages/Spinnaker/4E5ov/src/Spinnaker.jl:96
+  [5] _include_from_serialized(path::String, depmods::Vector{Any})
+    @ Base ./loading.jl:768
+  [6] _require_search_from_serialized(pkg::Base.PkgId, sourcepath::String)
+    @ Base ./loading.jl:854
+  [7] _require(pkg::Base.PkgId)
+    @ Base ./loading.jl:1097
+  [8] require(uuidkey::Base.PkgId)
+    @ Base ./loading.jl:1013
+  [9] require(into::Module, mod::Symbol)
+    @ Base ./loading.jl:997
+ [10] eval
+    @ ./boot.jl:373 [inlined]
+ [11] exec_options(opts::Base.JLOptions)
+    @ Base ./client.jl:268
+ [12] _start()
+    @ Base ./client.jl:495
+```
+
+Check that you have the environment variable `FLIR_GENTL64_CTI` set to the path to `FLIR_GenTL.cti` (e.g. `/opt/spinnaker/lib/flir-gentl/FLIR_GenTL.cti`).
