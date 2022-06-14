@@ -51,8 +51,20 @@ include("CameraList.jl")
 include("NodeMap.jl")
 include("Nodes.jl")
 
-# Create a System object at runtime
+get_bool_env(name::String; default::String="false") =
+    lowercase(Base.get(ENV, name, default)) in ("t", "true", "y", "yes", "1")
+
 function __init__()
+  # Given Spinnaker is a non-JLL managed dependency, it is sometimes helpful to delay the lib init
+  # so that julia has preference over which libraries are loaded.
+  # i.e. set this env var and load julia packages before calling Spinnaker.init()
+  if !get_bool_env("JULIA_SPINNAKER_MANUAL_INIT", default = "false")
+    init()
+  end
+end
+
+# Create a System object at runtime
+function init()
   @static if Sys.iswindows()
     paths = [joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")]
     libspinnaker = "SpinnakerC_v140.dll"

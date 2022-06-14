@@ -144,18 +144,18 @@ in this way by specifying the desired data format:
 julia> getimage(cam, Gray{N0f8}, normalize=true);
 julia> getimage(cam, Float64, normalize=false)
 1440×1080 CameraImage{Float64,2}:
- 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0 
+ 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0
 ```
 
 By specifying `normalize=true` the image data from the camera is intepreted as a
 fixed point number in the range [0,1]. By combining this with a fixed point Colorant type `Gray{N0f8}`, this provides direct compatibilty with the Julia images stack. Alterantively, without normalisation the unsigned integer data returned from the camera will be supplied in its natural range, e.g., a Mono8 pixel format will result in values in the range [0, 255].
 
-Mutating versions are available, where the type is determined from the input, the metadata will be updated and the underlying data array reused. 
+Mutating versions are available, where the type is determined from the input, the metadata will be updated and the underlying data array reused.
 
 ```julia
 julia> getimage!(cam, cameraimage);
 1440×1080 CameraImage{Float64,2}:
- 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0 
+ 84.0   85.0  90.0  90.0  87.0  94.0  89.0  92.0  …  88.0  79.0  76.0  87.0  78.0
 ```
 
 Metadata such as the id, timestamp, and exposure can be returned from the CameraImage:
@@ -203,7 +203,7 @@ julia> getimage!(cam, image)
 Spinnaker Image, (1440, 1080), 16bpp, PixelFormat_Mono16(1)
 ```
 
-Alternatively, 
+Alternatively,
 It is possible to convert a `SpinImage` to a `CameraImage` using the `CameraImage`
 constructor:
 
@@ -219,7 +219,7 @@ saveimage(cam, "output.png", Spinnaker.PNG)
 
 ### Stream (buffer) handling
 
-To set the current buffer mode, 
+To set the current buffer mode,
 
 ```julia
 julia> buffermode!(cam, "NewestFirst")
@@ -249,7 +249,7 @@ julia> bufferfailed(camera)
 0
 ```
 
-Please note the [specifics](https://www.ptgrey.com/tan/11174) of buffer handling to 
+Please note the [specifics](https://www.ptgrey.com/tan/11174) of buffer handling to
 understand the expected behaviour of the various buffer modes.
 
 
@@ -285,7 +285,7 @@ FLIR Blackfly S BFS-U3-16S2M (XXXXXXXX)
 
 ## Low-level Interface
 
-The operation of this package revolves around the manipulation of [nodes](https://www.ptgrey.com/tan/11153) defined by a camera specification. Nodes exist as part of a node map, of which there are several: the camera node map controls camera features; the stream node map controls image buffers; and the transport node map controls the specific transport layer of the device. Nodes may be integer valued, floating point valued, an enumeration, etc. 
+The operation of this package revolves around the manipulation of [nodes](https://www.ptgrey.com/tan/11153) defined by a camera specification. Nodes exist as part of a node map, of which there are several: the camera node map controls camera features; the stream node map controls image buffers; and the transport node map controls the specific transport layer of the device. Nodes may be integer valued, floating point valued, an enumeration, etc.
 
 In Spinnaker.jl, node access functions are provided which allow manipulation through their textual names (rather than integer identifiers). For example, a nodes can be written to using the `set!`function:
 
@@ -342,3 +342,11 @@ Stacktrace:
 ```
 
 Check that you have the environment variable `FLIR_GENTL64_CTI` set to the path to `FLIR_GenTL.cti` (e.g. `/opt/spinnaker/lib/flir-gentl/FLIR_GenTL.cti`).
+
+### Loading Spinnaker causes binary dependency (i.e. JLL) errors in other packages
+
+Given Spinnaker is a non-JLL managed dependency, it is sometimes helpful to delay the lib init
+so that julia has preference over which libraries are loaded.
+The simple way to do this is to load Spinnaker after other packages. However, if Spinnaker is in a sysimage
+and thus has its `__init__()` called on julia load, you can delay the lib init by setting
+`ENV["JULIA_SPINNAKER_MANUAL_INIT"]="true"` and loading julia packages before calling `Spinnaker.init()` manually.
