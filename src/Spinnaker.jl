@@ -52,7 +52,7 @@ include("NodeMap.jl")
 include("Nodes.jl")
 
 get_bool_env(name::String; default::String="false") =
-    lowercase(get(ENV, name, default)) in ("t", "true", "y", "yes", "1")
+    lowercase(Base.get(ENV, name, default)) in ("t", "true", "y", "yes", "1")
 
 function __init__()
   # Given Spinnaker is a non-JLL managed dependency, it is sometimes helpful to delay the lib init
