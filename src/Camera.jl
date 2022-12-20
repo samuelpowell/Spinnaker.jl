@@ -393,7 +393,7 @@ end
 #
 
 """
-  getimage!(::Camera, ::AbstractArray{T,2}; normalize=false, relase=true, timeout=-1)
+  getimage!(::Camera, ::AbstractArray{T,2}; normalize=false, release=true, timeout=-1)
 
   Copy the next iamge from the specified camera, converting to the format of, and overwriting the
   provided abstract array, blocking until available unless a timeout of >= 0 (ms) is specified. If release
