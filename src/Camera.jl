@@ -427,7 +427,7 @@ end
     Save the next image from the specified camera to file `fn`, blocking until available unless
     a timeout of >= 0 (ms) is specified. If release is false, the image buffer is not released.
 """
-function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat; relase=true, timeout=-1)
+function saveimage(cam::Camera, fn::AbstractString, fmt::spinImageFileFormat; release=true, timeout=-1)
 
     # Get image handle and check it's complete
     himage_ref = Ref(spinImage(C_NULL))
