@@ -66,9 +66,9 @@ end
 # Create a System object at runtime
 function init()
   @static if Sys.iswindows()
-    paths = [joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")]
+    paths = [joinpath(ENV["ProgramFiles"], "FLIR Systems", "Spinnaker", "bin64", "vs2015")]
     libspinnaker = "SpinnakerC_v140.dll"
-    libspinvideo = ""
+    libspinvideo = "SpinVideoC_v140.dll"
   elseif Sys.islinux()
     paths = ["/usr/lib" "/opt/spinnaker/lib"]
     libspinnaker = "libSpinnaker_C.so"
