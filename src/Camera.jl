@@ -221,6 +221,13 @@ function devicetemperature(cam::Camera, location::String)
   return Spinnaker.get(Spinnaker.SpinFloatNode(cam, "DeviceTemperature"))
 end
 
+"""
+  powersupplyvoltage(cam::Camera) -> Float
+
+  Return the device power supply voltage in Volts.
+"""
+powersupplyvoltage(cam::Camera) = Spinnaker.get(Spinnaker.SpinFloatNode(cam, "PowerSupplyVoltage"))
+
 #
 # Image acquistion
 #
