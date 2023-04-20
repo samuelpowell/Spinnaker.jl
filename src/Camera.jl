@@ -16,7 +16,7 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        acquisitionmode, acquisitionmode!,
        sensordims, imagedims, imagedims!, imagedims_limits, offsetdims, offsetdims!, offsetdims_limits,
        buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed,
-       reset!
+       reset!, powersupplyvoltage
 
 """
  Spinnaker SDK Camera object
@@ -220,6 +220,13 @@ function devicetemperature(cam::Camera, location::String)
   set!(SpinEnumNode(cam, "DeviceTemperatureSelector"), location)
   return Spinnaker.get(Spinnaker.SpinFloatNode(cam, "DeviceTemperature"))
 end
+
+"""
+  powersupplyvoltage(cam::Camera) -> Float
+
+  Return the device power supply voltage in Volts.
+"""
+powersupplyvoltage(cam::Camera) = Spinnaker.get(Spinnaker.SpinFloatNode(cam, "PowerSupplyVoltage"))
 
 #
 # Image acquistion
