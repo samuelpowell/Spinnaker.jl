@@ -18,6 +18,11 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed,
        reset!, powersupplyvoltage
 
+_DEFERRED_RELEASE_CAMS_LOCK = ReentrantLock()
+_DEFERRED_RELEASE_CAMS = []
+_CURRENT_CAM_SERIALS_LOCK = ReentrantLock()
+_CURRENT_CAM_SERIALS = []
+       
 """
  Spinnaker SDK Camera object
 
@@ -38,7 +43,11 @@ mutable struct Camera
     spinCameraInit(handle)
     names = Dict{String, String}()
     cam = new(handle, names)
-    finalizer(_release!, cam)
+    _release_deferred_cams()
+    lock(_CURRENT_CAM_SERIALS_LOCK) do
+      push!(_CURRENT_CAM_SERIALS, serial(cam))
+    end
+    finalizer(_maybe_release_cam, cam)
 
     # Activate chunk mode
     set!(SpinBooleanNode(cam, "ChunkModeActive"), true)
@@ -101,16 +110,76 @@ function _reinit(cam::Camera)
   return cam
 end
 
+function _release_deferred_cams()
+  lock(_DEFERRED_RELEASE_CAMS_LOCK)
+  try
+    # avoid a potential deadlock if another task just grabbed the lock
+    if !isempty(_CURRENT_CAM_SERIALS) && trylock(_CURRENT_CAM_SERIALS_LOCK)
+      try
+        for i in eachindex(_DEFERRED_RELEASE_CAMS)
+          cam = _DEFERRED_RELEASE_CAMS[i]
+          _release!(cam)
+          deleteat!(_DEFERRED_RELEASE_CAMS, i)
+        end
+      finally
+        unlock(_CURRENT_CAM_SERIALS_LOCK)
+      end
+    end
+  finally
+    unlock(_DEFERRED_RELEASE_CAMS_LOCK)
+  end
+end
+
+function _maybe_release_cam(cam)
+  # need to acquire _DEFERRED_RELEASE_CAMS_LOCK before trylock to avoid a memory leak
+  # (race to avoid: trylock == false, other thread unlocks and calls destroy_deferred,
+  #                 then we push a deferred plan that may never get freed)
+  # Also, we need to use a trylock spinloop rather than lock(_DEFERRED_RELEASE_CAMS_LOCK),
+  # since task switches aren't permitted in finalizers. This has suboptimal efficiency,
+  # but we shouldn't waste too many cycles since destroying plans is quick and contention
+  # should be rare.
+  while !trylock(_DEFERRED_RELEASE_CAMS_LOCK)
+    # Need a safepoint in here because without it, this loop blocks forward progress in the GC and can deadlock
+    # the program.
+    GC.safepoint()
+  end
+  try
+    if trylock(_CURRENT_CAM_SERIALS_LOCK)
+      try
+        _release!(cam)
+      finally
+        unlock(_CURRENT_CAM_SERIALS_LOCK)
+      end
+    else
+      push!(_DEFERRED_RELEASE_CAMS, cam)
+    end
+  finally
+    unlock(_DEFERRED_RELEASE_CAMS_LOCK)
+  end
+end
+
 # Release handle to system
 function _release!(cam::Camera)
   if cam.handle != C_NULL
-    try
-      stop!(cam)
-    catch e
+    our_serial = serial(cam)
+    our_cam_idx = findfirst(isequal(our_serial), _CURRENT_CAM_SERIALS)
+    deleteat!(_CURRENT_CAM_SERIALS, our_cam_idx)
+    another_cam_idx = findfirst(isequal(our_serial), _CURRENT_CAM_SERIALS)
+    if another_cam_idx !== nothing
+      # there is another handle to the same camera. do not release that handle because we will break the other one.
+      # that camera will release itself when its the last one.
+      spinCameraRelease(cam)
+      cam.handle = C_NULL
+    else
+      # we are the last camera with this handle, so release it
+      try
+        stop!(cam)
+      catch e
+      end
+      spinCameraDeInit(cam)
+      spinCameraRelease(cam)
+      cam.handle = C_NULL
     end
-    spinCameraDeInit(cam)
-    spinCameraRelease(cam)
-    cam.handle = C_NULL
   end
   return nothing
 end
