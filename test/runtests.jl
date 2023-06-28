@@ -1,8 +1,8 @@
 using Test, ImageCore, Dates
 function is_ci()
     get(ENV, "TRAVIS", "") == "true" ||
-    get(ENV, "APPVEYOR", "") in ("true", "True") ||
-    get(ENV, "CI", "") in ("true", "True")
+        get(ENV, "APPVEYOR", "") in ("true", "True") ||
+        get(ENV, "CI", "") in ("true", "True")
 end
 
 using Spinnaker
@@ -27,8 +27,9 @@ else
                 acquisitionmode!(cam, "Continuous")
                 @test acquisitionmode(cam) == "Continuous"
 
-                framerate!(cam, 60.0)
-                @test isapprox(framerate(cam), 60.0)
+                framerates = framerate_limits(cam)
+                framerate!(cam, framerates[end])
+                @test isapprox(framerate(cam), framerates[end])
             end
 
             @testset "Set exposure" begin
