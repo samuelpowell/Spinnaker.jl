@@ -1,4 +1,4 @@
-using Test, ImageCore
+using Test, ImageCore, Dates
 function is_ci()
     get(ENV, "TRAVIS", "") == "true" ||
     get(ENV, "APPVEYOR", "") in ("true", "True") ||
