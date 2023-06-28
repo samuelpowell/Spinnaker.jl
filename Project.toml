@@ -1,6 +1,6 @@
 name = "Spinnaker"
 uuid = "8e0d2ad3-56b8-53f3-8036-54b674872bef"
-version = "1.1.0"
+version = "1.1.1"
 
 [deps]
 FixedPointNumbers = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
@@ -11,8 +11,9 @@ FixedPointNumbers = "0.6, 0.7, 0.8"
 julia = "0.7, 1"
 
 [extras]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 ImageCore = "a09fc81d-aa75-5fe9-8630-4744c3626534"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["ImageCore", "Test"]
+test = ["Dates", "ImageCore", "Test"]
