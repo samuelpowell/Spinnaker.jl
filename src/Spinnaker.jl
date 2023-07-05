@@ -58,6 +58,11 @@ system_initialized = false
 
 # Create a System object at runtime
 function init()
+  if haskey(ENV, "JULIA_SPINNAKER_MANUAL_INIT")
+    @warn """
+      The environment variable `JULIA_SPINNAKER_MANUAL_INIT` is deprecated.
+      Spinnaker is initialized during first CameraList usage""" maxlog=1
+  end
   @static if Sys.iswindows()
     paths = [joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")]
     libspinnaker = "SpinnakerC_v140.dll"
