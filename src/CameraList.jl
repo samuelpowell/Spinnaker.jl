@@ -15,6 +15,7 @@ mutable struct CameraList
   handle::spinCameraList
 
   function CameraList()
+    system_initialized || init()
     hcamlist_ref = Ref(spinCameraList(C_NULL))
     spinCameraListCreateEmpty(hcamlist_ref)
     @assert hcamlist_ref[] != C_NULL

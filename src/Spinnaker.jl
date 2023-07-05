@@ -54,17 +54,15 @@ include("Nodes.jl")
 get_bool_env(name::String; default::String="false") =
     lowercase(Base.get(ENV, name, default)) in ("t", "true", "y", "yes", "1")
 
-function __init__()
-  # Given Spinnaker is a non-JLL managed dependency, it is sometimes helpful to delay the lib init
-  # so that julia has preference over which libraries are loaded.
-  # i.e. set this env var and load julia packages before calling Spinnaker.init()
-  if !get_bool_env("JULIA_SPINNAKER_MANUAL_INIT", default = "false")
-    init()
-  end
-end
+system_initialized = false
 
 # Create a System object at runtime
 function init()
+  if haskey(ENV, "JULIA_SPINNAKER_MANUAL_INIT")
+    @warn """
+      The environment variable `JULIA_SPINNAKER_MANUAL_INIT` is deprecated.
+      Spinnaker is initialized during first CameraList usage""" maxlog=1
+  end
   @static if Sys.iswindows()
     paths = [joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")]
     libspinnaker = "SpinnakerC_v140.dll"
@@ -78,8 +76,7 @@ function init()
     libspinnaker = "libSpinnaker_C.dylib"
     libspinvideo = "libSpinVideo_C.dylib"
   else
-    @error "Spinnaker SDK only supported on Linux, Windows and MacOS platforms"
-    return
+    error("Spinnaker SDK is only supported on Linux, Windows and MacOS platforms")
   end
   libSpinnaker_C_path = ""
   libSpinVideo_C_path = ""
@@ -93,20 +90,18 @@ function init()
   end
 
   if libSpinnaker_C[] == "" || libSpinVideo_C[] == ""
-    @error "Spinnaker SDK cannot be found. This package can be loaded, but will not be functional."
-    return
+    error("Spinnaker SDK cannot be found.")
   end
   try
     libSpinnaker_C_handle = dlopen(libSpinnaker_C[])
     !Sys.iswindows() && (libSpinVideo_C_handle = dlopen(libSpinVideo_C[]))
-  catch ex
-    bt = catch_backtrace()
+  catch
     @error "Spinnaker SDK cannot be dlopen-ed"
-    showerror(stderr, ex, bt)
+    rethrow()
   end
   try
     global spinsys = System()
-  catch ex
+  catch
     bt = catch_backtrace()
     @error "Spinnaker SDK loaded but Spinnaker.jl failed to initialize"
     if !haskey(ENV, "FLIR_GENTL64_CTI")
@@ -114,8 +109,9 @@ function init()
     elseif !endswith(ENV["FLIR_GENTL64_CTI"], "FLIR_GenTL.cti")
       @warn "The environment has the variable `FLIR_GENTL64_CTI`, but it does not point to `FLIR_GenTL.cti`, which may be the cause of this error. Check that it is set to the path to `FLIR_GenTL.cti` (e.g. `/opt/spinnaker/lib/flir-gentl/FLIR_GenTL.cti`)."
     end
-    showerror(stderr, ex, bt)
+    rethrow()
   end
+  system_initialized = true
 end
 
 end # module

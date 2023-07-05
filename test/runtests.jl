@@ -27,8 +27,9 @@ else
                 acquisitionmode!(cam, "Continuous")
                 @test acquisitionmode(cam) == "Continuous"
 
-                framerate!(cam, 60.0)
-                @test isapprox(framerate(cam), 60.0)
+                max_framerate = framerate_limits(cam)[end]
+                framerate!(cam, max_framerate)
+                @test isapprox(framerate(cam), max_framerate)
             end
 
             @testset "Set exposure" begin
