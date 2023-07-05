@@ -345,6 +345,8 @@ Check that you have the environment variable `FLIR_GENTL64_CTI` set to the path 
 
 ### Loading Spinnaker causes binary dependency (i.e. JLL) errors in other packages
 
-Given Spinnaker is a non-JLL managed dependency, it is sometimes helpful to delay the lib init
-so that julia has preference over which libraries are loaded.
-From v1.1.1 Spinnaker.jl initializes the Spinnaker SDK during first usage of CameraList.
+From v1.1.1 Spinnaker.jl initializes the Spinnaker SDK during first usage of `CameraList()`.
+If you need to call any of the SDK's native functions before using `CameraList()`, then call `Spinnaker.init()` manually.
+
+Prior to v1.1.1, Spinnaker.jl initializes the SDK inside its `__init__()` function, called on Julia load.
+You can delay this by setting `ENV["JULIA_SPINNAKER_MANUAL_INIT"]="true"` and loading Julia packages before calling `Spinnaker.init()` manually.
