@@ -64,9 +64,13 @@ function init()
       Spinnaker is initialized during first CameraList usage""" maxlog=1
   end
   @static if Sys.iswindows()
-    paths = [joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")]
+    if isdir(joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015"))
+      paths = [joinpath(ENV["ProgramFiles"], "Point Grey Research", "Spinnaker", "bin", "vs2015")]
+    elseif isdir(joinpath(ENV["ProgramFiles"], "FLIR Systems", "Spinnaker", "bin64", "vs2015"))
+      paths = [joinpath(ENV["ProgramFiles"], "FLIR Systems", "Spinnaker", "bin64", "vs2015")]
+    end
     libspinnaker = "SpinnakerC_v140.dll"
-    libspinvideo = ""
+    libspinvideo = "SpinVideoC_v140.dll"
   elseif Sys.islinux()
     paths = ["/usr/lib" "/opt/spinnaker/lib"]
     libspinnaker = "libSpinnaker_C.so"
