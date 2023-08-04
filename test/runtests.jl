@@ -54,5 +54,11 @@ else
                 end
             end
         end
+
+        @testset "#90: duplicate initialization crash" begin
+            CameraList()
+            CameraList()
+            GC.gc(true)
+        end
     end
 end
