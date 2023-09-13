@@ -53,6 +53,19 @@ else
                     stop!(cam)
                 end
             end
+            @testset "Timestamps" begin
+                ## init
+                framerate!(cam, framerate_limits(cam)[end])
+                exposure!(cam)
+                start!(cam)
+                img = getimage(cam, Gray{N0f8}, normalize=true)
+                ##
+                id, ts1, ex = getimage!(cam, img)
+                reset_timestamps!(cam)
+                id, ts2, ex = getimage!(cam, img)
+                @test ts2 < ts1
+                stop!(cam)
+            end
         end
 
         @testset "#90: duplicate initialization crash" begin

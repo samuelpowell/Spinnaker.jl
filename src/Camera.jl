@@ -16,7 +16,7 @@ export serial, model, vendor, isrunning, start!, stop!, getimage, getimage!, sav
        acquisitionmode, acquisitionmode!,
        sensordims, imagedims, imagedims!, imagedims_limits, offsetdims, offsetdims!, offsetdims_limits,
        buffercount, buffercount!, buffermode, buffermode!, bufferunderrun, bufferfailed,
-       reset!, powersupplyvoltage
+       reset!, reset_timestamps!, powersupplyvoltage
 
 """
  Spinnaker SDK Camera object
@@ -160,6 +160,21 @@ function reset!(cam::Camera; wait::Bool = false, timeout::Union{Int,Nothing} = n
     end
     isopen(timeout) || error("Spinnaker timed out waiting for the camera with serial number $(sn) to reappear after reset")
   end
+  return cam
+end
+
+"""
+  reset_timestamps!(cam::Camera)
+
+Reset the frame timestamps.
+"""
+function reset_timestamps!(cam::Camera)
+  hNodeMap = Ref(spinNodeMapHandle(C_NULL))
+  spinCameraGetNodeMap(cam, hNodeMap)
+
+  hTimestampReset = Ref(spinNodeHandle(C_NULL))
+  spinNodeMapGetNode(hNodeMap[], "TimestampReset", hTimestampReset);
+  spinCommandExecute(hTimestampReset[])
   return cam
 end
 
