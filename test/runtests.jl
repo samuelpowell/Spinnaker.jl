@@ -71,7 +71,7 @@ else
                 @test !v3_3_enable(cam)
 
                 @testset "deprecated" begin
-                    @test_deprecated ine_mode(cam, "Input")
+                    @test_deprecated line_mode(cam, "Input")
                     @test line_mode(cam) == "Input"
                     @test_deprecated line_mode(cam, "Output")
                     @test line_mode(cam) == "Output"
