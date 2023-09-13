@@ -60,9 +60,9 @@ else
                 start!(cam)
                 img = getimage(cam, Gray{N0f8}, normalize=true)
                 ##
-                id, ts1, ex = getimage!(cam, image)
+                id, ts1, ex = getimage!(cam, img)
                 reset_timestamps!(cam)
-                id, ts2, ex = getimage!(cam, image)
+                id, ts2, ex = getimage!(cam, img)
                 @test ts2 < ts1
                 stop!(cam)
             end
