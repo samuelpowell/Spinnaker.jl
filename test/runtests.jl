@@ -53,6 +53,35 @@ else
                     stop!(cam)
                 end
             end
+
+            @testset "Digital IO" begin
+                line_inverter!(cam, true)
+                @test line_inverter(cam)
+                line_inverter!(cam, false)
+                @test !line_inverter(cam)
+
+                line_mode!(cam, "Input")
+                @test line_mode(cam) == "Input"
+                line_mode!(cam, "Output")
+                @test line_mode(cam) == "Output"
+
+                v3_3_enable!(cam, true)
+                @test v3_3_enable(cam)
+                v3_3_enable!(cam, false)
+                @test !v3_3_enable(cam)
+
+                @testset "deprecated" begin
+                    @test_deprecated line_mode(cam, "Input")
+                    @test line_mode(cam) == "Input"
+                    @test_deprecated line_mode(cam, "Output")
+                    @test line_mode(cam) == "Output"
+
+                    @test_deprecated v3_3_enable(cam, true)
+                    @test v3_3_enable(cam)
+                    @test_deprecated v3_3_enable(cam, false)
+                    @test !v3_3_enable(cam)
+                end
+            end
         end
 
         @testset "#90: duplicate initialization crash" begin
