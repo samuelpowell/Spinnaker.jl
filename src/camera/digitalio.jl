@@ -3,6 +3,10 @@
 
 # camera/digitalio.jl: Camera object digital io features
 
+export line_mode!, line_mode,
+       line_inverter!, line_inverter,
+       v3_3_enable!, v3_3_enable
+
 """
   line_mode!(::Camera, state::Symbol)
 
