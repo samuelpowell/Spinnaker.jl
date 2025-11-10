@@ -87,7 +87,7 @@ function show(io::IO, camlist::CameraList)
     vendorname = vendor(cam)
     modelname = model(cam)
     serialno = serial(cam)
-    write(io, "$i\t$serialno\t$vendorname $modelname")
+    write(io, "$i\t$serialno\t$vendorname $modelname\n")
     _release!(cam) # Make sure this is cleaned up immediately
   end
 
